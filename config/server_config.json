@@ -1,0 +1,134 @@
+{
+  "ssl": {
+    "cert": "/root/.acme.sh/o-k.tech/o-k.tech.cer",
+    "key": "/root/.acme.sh/o-k.tech/o-k.tech.key"
+  },
+  "listeners": [
+    {
+      "address": "0.0.0.0",
+      "port": 8500,
+      "https": false
+    }
+    // {
+    //   "address": "0.0.0.0",
+    //   "port": 443,
+    //   "https": true,
+    //   "cert": "",
+    //   "key": ""
+    // }
+  ],
+  "app": {
+    "threads_num": 0,
+    "enable_session": false,
+    "session_timeout": 0,
+    //"document_root": ".",
+    "home_page": "index.html",
+    "static_file_headers": [
+      {
+        "name": "Cache-Control",
+        "value": "max-age=2592000"
+      }
+    ],
+    "upload_path": "./uploads",
+    "file_types": [
+      "gif",
+      "png",
+      "jpg",
+      "jpeg",
+      "svg",
+      "bmp",
+      "js",
+      "css",
+      "html",
+      "txt",
+      "ttf",
+      "otf",
+      "woff2",
+      "woff",
+      "eot",
+      "ico",
+      "icns",
+      "swf",
+      "xap",
+      "apk",
+      "cur",
+      "xml",
+      "xsl"
+    ],
+    "locations": [
+      {
+        "uri_prefix": "/.well-known/acme-challenge/",
+        "default_content_type": "text/plain",
+        "alias": "",
+        "is_case_sensitive": false,
+        "allow_all": true,
+        "is_recursive": true
+      }
+    ],
+    "max_connections": 100000,
+    "max_connections_per_ip": 0,
+    "load_dynamic_views": false,
+    "log": {
+      "log_path": "./",
+      "logfile_base_name": "",
+      "log_size_limit": 100000000,
+      "log_level": "WARN"
+    },
+    "run_as_daemon": false,
+    "relaunch_on_error": false,
+    "use_sendfile": true,
+    "use_gzip": true,
+    "static_files_cache_time": 5,
+    "simple_controllers_map": [
+      {
+        "path": "/path/name",
+        "controller": "controllerClassName",
+        "http_methods": ["get", "post"]
+      }
+    ],
+    "idle_connection_timeout": 6000,
+    "server_header_field": "o-k.tech",
+    "keepalive_requests": 0,
+    "pipelining_requests": 0,
+    "gzip_static": true,
+    "br_static": true,
+    "client_max_body_size": "10M",
+    "client_max_websocket_message_size": ""
+  },
+  "plugins": [
+    {
+      "dependencies": [],
+      "config": {
+        "heartbeat_interval": 2
+      }
+    }
+    // {
+    //   "name": "drogon::plugin::SecureSSLRedirector",
+    //   "dependencies": [],
+    //   "config": {
+    //     "secure_ssl_host": "o-k.tech"
+    //   }
+    // }
+  ],
+  "custom_config": {
+    "server_url": "http://localhost:8500",
+    "drogon_root": "../drogonroot",
+    "hetzner_token": "wR0HVBg3wCjloNRwZlK5K3XZMdXixtKTYOfQxAXKHAyuAPMHsqSyS1j5EAI1lURQ",
+    "hetzner_servers": "curl -H \"Authorization: Bearer wR0HVBg3wCjloNRwZlK5K3XZMdXixtKTYOfQxAXKHAyuAPMHsqSyS1j5EAI1lURQ\"  https://api.hetzner.cloud/v1/servers",
+    "MATOMO_ADDRESS": "",
+    "debug": false,
+    "routes": {
+        "web": [
+            {"route": "/manifest.json", "type": "static", "url": "_system/web/public/manifest.json"},
+            {"route": "/service-worker.js", "type": "static", "url": "_system/web/public/service-worker.js"},
+            {"route": "403.html", "type": "static", "url": "_system/web/public/403.html"},
+            {"route": "404.html", "type": "static", "url": "_system/web/public/404.html"},
+            {"route": "413.html", "type": "static", "url": "_system/web/public/413.html"},
+            {"route": "500.html", "type": "static", "url": "_system/web/public/500.html"},
+            {"route": "/web", "type": "static", "url": "_system/web/index.html"},
+            {"route": "/robots.txt", "type": "static", "url": "_system/web/robots.txt"},
+            {"route": "/web/(.*)", "type": "regex", "url": "_system/web/$1","default":["index.html"]},
+        ]
+    }
+  }
+}

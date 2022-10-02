@@ -1,0 +1,39 @@
+windows: install with --triplet x64-windows
+https://stackoverflow.com/questions/55496611/cmake-cannot-find-libraries-installed-with-vcpkg
+ThirdParty Libraries:
+vcpkg:
+1. drogon:
+    find_package(Drogon CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE Drogon::Drogon)
+2. caf:
+    find_package(CAF CONFIG REQUIRED)
+    # note: 1 targets were omitted.
+    target_link_libraries(main PRIVATE CAF::io CAF::core CAF::test CAF::openssl)
+3. jsoncons
+    find_package(jsoncons CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE jsoncons)
+4. date
+    find_package(date CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE date::date date::date-tz)
+5. gtest
+    find_package(GTest CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE GTest::gmock GTest::gtest GTest::gmock_main GTest::gtest_main)
+6. cpp-jwt
+    find_package(cpp-jwt CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE cpp-jwt::cpp-jwt)
+7. parallel-hashmap
+    find_path(PARALLEL_HASHMAP_INCLUDE_DIRS "parallel_hashmap/btree.h")
+    target_include_directories(main PRIVATE ${PARALLEL_HASHMAP_INCLUDE_DIRS})
+8. tsl-ordered-map
+    find_package(tsl-ordered-map CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE tsl::ordered_map)
+9. boost
+	find_package(Boost REQUIRED COMPONENTS)
+	target_link_libraries(main PRIVATE ${Boost_LIBRARIES})
+10. abseil
+    find_package(absl CONFIG REQUIRED)
+    # note: 133 targets were omitted.
+    target_link_libraries(main PRIVATE absl::any absl::base absl::bits absl::city)
+11. nghttp2:
+    https://github.com/microsoft/vcpkg/issues/6951#issuecomment-533268989
+12. 

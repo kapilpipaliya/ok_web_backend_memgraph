@@ -1,0 +1,61 @@
+How to Install Development Tools on Ubuntu
+https://tecadmin.net/install-development-tools-on-ubuntu/
+- sudo apt update
+- sudo apt install build-essential
+- sudo apt-get install pkg-config
+- sudo apt install autoconf automake gdb git libffi-dev zlib1g-dev libssl-dev
+- sudo apt install git make cmake clang gsasl libgsasl7-dev gnutls-bin libgnutls28-dev libssl-dev
+
+install  on ubuntu server:
+1.install vmime:
+- cd
+- git clone https://github.com/kisli/vmime.git
+- cd vmime
+- mkdir build
+- cd build
+- cmake .. -DVMIME_HAVE_MESSAGING_PROTO_SENDMAIL=OFF -DCMAKE_BUILD_TYPE=Release
+- make -j4
+- make install
+
+2. git clone https://github.com/kapilpipaliya/ok_web_backend.git
+- cd
+- cd ok_web_backend
+- install vcpkg
+- https://vcpkg.io/en/getting-started.html
+- git clone https://github.com/Microsoft/vcpkg.git
+- sh .\vcpkg\bootstrap-vcpkg.sh
+- cd vcpkg
+- vcpkg install drogon caf jsoncons date gtest cpp-jwt parallel-hashmap tsl-ordered-map boost abseil nghttp2
+- cd ..
+- mkdir cmake-build-debug
+- cd cmake-build-debug
+(fix the path below)
+- export CMAKE_TOOLCHAIN_FILE="/home/k2/ok/ok_web_backend/vcpkg/scripts/buildsystems/vcpkg.cmake"
+- rm -rf *
+- cmake ..
+- make -j4
+
+3. start the server:
+in the project root run this command:
+cmake-build-debug/ok_web_backend config/server_config.json
+
+4. configure IDE:
+- install QT Creator
+- open current project in QT Creator, select CMakeLists.txt file
+add VCPKG_ROOT /home/k2/ok_web_backend/vcpkg
+to build environment of the project
+pass local_config.json as command line argument.
+
+5. Setup database:
+download arangodb Tar package from:
+https://www.arangodb.com/download-major/debian/
+https://download.arangodb.com/arangodb39/Community/Linux/arangodb3-linux-3.9.1.tar.gz
+export PATH="$PWD/bin:$PATH"
+arangodb --starter.mode single --starter.data-dir data/
+
+(optional) Take dump:
+tar -cvzf filename.tar.gz {files} {folders}.
+
+6. Restore Database dump:
+export PATH="$PWD/bin:$PATH"
+arangorestore --input-directory "dump" --all-databases true --create-database
