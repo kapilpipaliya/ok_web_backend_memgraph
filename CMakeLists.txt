@@ -65,85 +65,12 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${Boost_LIBRARIES})
 find_package(absl CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE absl::str_format)
 
-add_subdirectory(third_party/velocypack)
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/third_party/velocypack/include")
-target_link_libraries(${PROJECT_NAME} PRIVATE velocypack)
-
 add_subdirectory(third_party/mgclient)
 target_link_libraries(${PROJECT_NAME} PRIVATE mgclient-static)
 target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/third_party/mgclient/mgclient_cpp/include")
 
-
-# nghtt2:
-# https://github.com/microsoft/vcpkg/issues/6951#issuecomment-533268989
-find_path(nghttp2_INCLUDE_DIRS nghttp2.h PATH_SUFFIXES nghttp2)
-
-set(nghttp2_INCLUDE_DIRS ${nghttp2_INCLUDE_DIRS}/../)
-include(SelectLibraryConfigurations)
-find_library(nghttp2_LIBRARY_RELEASE NAMES nghttp2)
-find_library(nghttp2_LIBRARY_DEBUG NAMES nghttp2 HINTS debug)
-select_library_configurations(nghttp2)
-
-target_include_directories(${PROJECT_NAME} PRIVATE ${nghttp2_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PRIVATE ${nghttp2_LIBRARY_DEBUG})
-
-# llhttp:
-SET(LLHTTP_SOURCES
-  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/llhttp/src/api.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/llhttp/src/http.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/llhttp/src/llhttp.c
-)
-
-add_library(llhttp STATIC
-  ${LLHTTP_SOURCES}
-)
-
-target_include_directories(llhttp PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/third_party/llhttp/include")
-
-# fuerte:
-add_library(fuerte STATIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/fuerte/src/connection.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/fuerte/src/ConnectionBuilder.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/fuerte/src/helper.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/fuerte/src/http.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/fuerte/src/H1Connection.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/fuerte/src/H2Connection.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/fuerte/src/jwt.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/fuerte/src/loop.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/fuerte/src/message.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/fuerte/src/requests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/fuerte/src/types.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/fuerte/src/vst.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/fuerte/src/VstConnection.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/fuerte/src/connection.cpp
-  )
-
-target_link_libraries(fuerte PUBLIC ${nghttp2_LIBRARY_DEBUG})
-target_link_libraries(fuerte PUBLIC llhttp)
-# target_link_libraries(fuerte PUBLIC boost_system)
-target_include_directories(fuerte SYSTEM PUBLIC "${Boost_INCLUDE_DIR}") # /home/k/ok_web_backend/vcpkg/installed/x64-linux/include
-target_link_libraries(fuerte PUBLIC velocypack)
-
-include(CheckTypeSize)
-check_type_size("ssize_t" SIZEOF_SSIZE_T)
-if(SIZEOF_SSIZE_T STREQUAL "")
-  # ssize_t is a signed type in POSIX storing at least -1.
-  # Set it to "int" to match the behavior of AC_TYPE_SSIZE_T (autotools).
-  target_compile_definitions(fuerte PRIVATE ssize_t=int)
-endif()
-
-target_include_directories(fuerte SYSTEM PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/third_party/fuerte/include")
-target_include_directories(fuerte PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/third_party/llhttp/include")
-# target_include_directories(fuerte SYSTEM PUBLIC "${OPENSSL_INCLUDE_DIR}")
-target_link_libraries(${PROJECT_NAME} PRIVATE fuerte)
-
 include_directories(inc)
 include_directories(SYSTEM third_party/one_file_lib)
-include_directories(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/third_party/fuerte/include")
-
-find_package(vmime REQUIRED) #note wmime dynamically link current system icu libraries. when system is upgraded just recomile it.
-#note vmime must compile with correct stdlib
-target_link_libraries(${PROJECT_NAME} PRIVATE vmime)
 
 # ##############################################################################
 
@@ -165,8 +92,6 @@ aux_source_directory(models MODEL_SRC)
 aux_source_directory(src/actor_system CAF_SRC)
 aux_source_directory(src/db DB_SRC)
 aux_source_directory(src/utils UTILS_SRC)
-aux_source_directory(src/table TABLE_SRC)
-aux_source_directory(src/mutate MUTATE_SRC)
 aux_source_directory(src MAIN_SRC)
 
 aux_source_directory(third_party/pystring UTILS_SRC)
@@ -192,8 +117,6 @@ target_sources(${PROJECT_NAME}
                ${UTILS_SRC}
                ${DB_SRC}
                ${CAF_SRC}
-               ${TABLE_SRC}
-               ${MUTATE_SRC}
                ${MAIN_SRC}
                )
 # ##############################################################################

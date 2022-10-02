@@ -1,6 +1,5 @@
 #include "utils/os_functions.hpp"
 #include <drogon/drogon.h>
-#include "utils/GlobalSettings.hpp"
 #include <unistd.h>
 #include <poll.h>
 #include <cstdlib>

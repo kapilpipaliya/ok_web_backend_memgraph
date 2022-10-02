@@ -1,10 +1,7 @@
 #pragma once
 #include <string>
 #include <jsoncons/json.hpp>
-#include <velocypack/Slice.h>
-#include <velocypack/Builder.h>
-#include <velocypack/Parser.h>
-#include <velocypack/velocypack-aliases.h>
+
 using Collection = std::string;
 using Database = std::string;
 using SchemaKey = std::string;

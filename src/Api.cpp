@@ -4,14 +4,11 @@
 #include "utils/ErrorConstants.hpp"
 #include "db/db_functions.hpp"
 #include "actor_system/CAF.hpp"
-#include "utils/GlobalSettings.hpp"
-#include "db/DatabaseApi.hpp"
 // #include "SimpleRequestHelper.hpp"
 // #include "SimpleRequest.hpp"
 // #include "Rest/HttpResponse.h"
 // #include "GeneralServer/GeneralServerFeature.h"
 // #include "RestServer/ServerGlobal.hpp"
-#include <velocypack/Collection.h>
 #include "utils/json_functions.hpp"
 #include "utils/html_functions.hpp"
 #include "json/json.h"
@@ -325,107 +322,5 @@ void sendError(std::function<void(drogon::HttpResponsePtr const &)> &callback, s
   resp->setBody(message);
   callback(resp);
 }
-/*std::function<void(arangodb::rest::RestHandler *)> foxxResponseHandler(std::function<void(drogon::HttpResponsePtr const &)> &callback)
-{
-  return [callback](arangodb::rest::RestHandler *handler)
-  {
-    auto newResp = handler->stealResponse();
-#ifdef ARANGODB_ENABLE_MAINTAINER_MODE
-    arangodb::HttpResponse &response = dynamic_cast<arangodb::HttpResponse &>(*baseRes);
-#else
-    arangodb::HttpResponse &response = static_cast<arangodb::HttpResponse &>(*newResp);
-#endif
-    auto _response = response.stealBody();
-    auto resp = drogon::HttpResponse::newHttpResponse();
-    // resp->setStatusCode(static_cast<drogon::HttpStatusCode>(response.responseCode()));
-    // switch (response.contentType())
-    // {
-    //   case arangodb::rest::ContentType::CUSTOM:           // use Content-Type from _headers
-    //     resp->setContentTypeCode(drogon::CT_TEXT_PLAIN);  // CT_CUSTOM
-    //     break;
-    //   case arangodb::rest::ContentType::JSON:  // application/json
-    //     resp->setContentTypeCode(drogon::CT_APPLICATION_JSON);
-    //     break;
-    //   case arangodb::rest::ContentType::VPACK:  // application/x-velocypack
-    //     resp->setContentTypeCode(drogon::CT_TEXT_PLAIN);
-    //     break;
-    //   case arangodb::rest::ContentType::TEXT:  // text/plain
-    //     resp->setContentTypeCode(drogon::CT_TEXT_PLAIN);
-    //     break;
-    //   case arangodb::rest::ContentType::HTML:  // text/html
-    //     resp->setContentTypeCode(drogon::CT_TEXT_HTML);
-    //     break;
-    //   case arangodb::rest::ContentType::DUMP:  // application/x-arango-dump
-    //     resp->setContentTypeCode(drogon::CT_TEXT_PLAIN);
-    //     break;
-    //   case arangodb::rest::ContentType::UNSET: resp->setContentTypeCode(drogon::CT_TEXT_PLAIN); break;
-    // }
-    resp->setContentTypeCodeAndCustomString(drogon::ContentType::CT_NONE, response.responseString(response.responseCode()));  // HttpRequest.cpp 492
-    for (auto &i : response.headers()) resp->addHeader(i.first, i.second);
-    for (auto &i : response.cookies()) resp->addHeader("Set-Cookie", i);
-    resp->setBody(_response->toString());
-    // LOG_INFO << "Sending Result";
-    // LOG_TRACE<<"trace logs test3";
-    callback(resp);
-  };
-};*/
-/*std::pair<ErrorCode, ErrorMsg> foxxApi(drogon::HttpRequestPtr const &req,
-                                       std::string &&urlPart,
-                                       std::function<void(arangodb::rest::RestHandler *)> &&handler1,
-                                       std::function<void(drogon::HttpResponsePtr const &)> &callback)
-{
-  try
-  {
-    // auto method = HttpMethodToString(req->method());
-    // std::shared_ptr<arangodb::velocypack::Builder> builder;
-    // ok::ErrorCode er = ok::ErrorCode::ERROR_NO_ERROR;
-    // if (req->method() == drogon::HttpMethod::Get || req->method() == drogon::HttpMethod::Head) builder = std::make_shared<VPackBuilder>();
-    // else
-    //   std::tie(er, builder) = arangodb::velocypack::parseJson(std::string(req->getBody()));
-    // if (ok::isEr(er)) { return {er, "Cant parse JSON"}; }
-    // std::shared_ptr<VPackBuilder> payLoad;
-    // payLoad = std::make_shared<VPackBuilder>(builder->slice());
-    // auto simpleRequestHelper = std::make_unique<SimpleRequestHelper>();
-    // // simpleRequestHelper->wsConnectionActor = self;
-    // // set the endpoint
-    // arangodb::ConnectionInfo info;
-    // info.endpoint = "http+tcp://127.0.0.1:8529";
-    // info.endpointType = arangodb::Endpoint::DomainType::IPV4;
-    // info.encryptionType = arangodb::Endpoint::EncryptionType::NONE;
-    // info.serverAddress = "127.0.0.1";
-    // info.serverPort = 8529;
-    // info.clientAddress = "127.0.0.1";
-    // info.clientPort = 55566;
-    // auto _request = std::make_unique<SimpleRestRequest>(info, callback, std::move(simpleRequestHelper), 1, "/_db/" + ok::utils::html::getSubdomain(req->getHeader("host")) + urlPart, method, payLoad);
-    // _request->setHeader("rest", 4);
-    // for (auto &h : req->headers()) { _request->setHeader(h.first.c_str(), h.first.length(), h.second.c_str(), h.second.length()); }
-    // for (auto &c : req->cookies()) { _request->setCookie(const_cast<char *>(c.first.c_str()), c.first.length(), c.second.c_str()); }
-    // // Step 3: Try to resolve vocbase and use
-    // if (!ok::resolveRequestContext(*_request)) { return {ok::ErrorCode::CANNOT_CONNECT_TO_DATABASE, "CANT USE DATABASE"}; }
-    // auto resp = std::make_unique<arangodb::HttpResponse>(arangodb::rest::ResponseCode::SERVER_ERROR, 1, nullptr);
-    // resp->setContentType(_request->contentTypeResponse());
-    // // ContentType stringToContentType(std::string const& val, ContentType def); // CommonDefines.cpp setting
-    // for (auto &i : req->headers()) { _request->setHeaderV2(std::string{i.first}, std::string{i.second}); }
-    // // create a handler and execute
-    // // adding suffix and prefix...
-    // auto &factory = arangodb::serverGlobal->getFeature<arangodb::GeneralServerFeature>().handlerFactory();
-    // auto handler = factory.createHandler(*arangodb::serverGlobal, std::move(_request), std::move(resp));
-    // // give up, if we cannot find a handler
-    // if (handler == nullptr) { return {ok::ErrorCode::ERROR_FAILED, "handler not found"}; }
-    // // queue the operation in the scheduler, ..
-    // handler->runHandler(handler1);
-    return {ok::ErrorCode::ERROR_NO_ERROR, ""};
-  }
-  catch (...)
-  {
-    LOG_FATAL << "Fatal Error";
-    return {ok::ErrorCode::ERROR_INTERNAL, "Fatal Error"};
-  }
-}*/
-/*void foxxApiResponse(drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpResponsePtr const &)> &&callback, std::string &&urlPart)
-{
-  auto [er, reason] = foxxApi(req, std::move(urlPart), foxxResponseHandler(callback), callback);
-  if (ok::isEr(er)) { sendError(callback, reason); }
-}*/
 }  // namespace system_
 }  // namespace ok::api

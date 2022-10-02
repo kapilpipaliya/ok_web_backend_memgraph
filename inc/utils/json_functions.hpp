@@ -1,9 +1,7 @@
 #pragma once
 #include <jsoncons/json.hpp>
 #include "alias.hpp"
-#include <velocypack/Builder.h>
 #include "ErrorConstants.hpp"
-#include <velocypack/Parser.h>
 #include <trantor/utils/Logger.h>
 namespace jsoncons
 {
@@ -95,44 +93,3 @@ inline std::tuple<std::string, std::string, bool> getFirstStringOption(jsoncons:
 }
 inline std::string to_string(jsoncons::ojson const &json) noexcept { return json.to_string(); }
 };  // namespace jsoncons
-namespace arangodb
-{
-namespace velocypack
-{
-// https://github.com/arangodb/velocypack/blob/master/examples/API.md#parsing-json-into-a-vpack-value
-inline std::tuple<ok::ErrorCode, std::shared_ptr<arangodb::velocypack::Builder>> parseJson(std::string const &json) noexcept
-{
-  if (json.empty())
-  {
-    LOG_DEBUG << "When Parsing json, it should not be empty string";
-    return {ok::ErrorCode::ERROR_HTTP_CORRUPTED_JSON, std::make_shared<arangodb::velocypack::Builder>()};
-  }
-  arangodb::velocypack::Parser parser;
-  try
-  {
-    parser.parse(json);
-    // get a pointer to the start of the data
-    return {ok::ErrorCode::ERROR_NO_ERROR, parser.steal()};
-    // arangodb::velocypack::ValueLength nr = parser.parse(json);
-    // LOG_DEBUG << "Number of values: " << nr ;
-  }
-  catch (std::bad_alloc const &)
-  {
-    LOG_WARN << "Out of memory when parsing string to velocyPack json!";
-    return {ok::ErrorCode::ERROR_HTTP_CORRUPTED_JSON, std::make_shared<arangodb::velocypack::Builder>()};
-  }
-  catch (arangodb::velocypack::Exception const &ex)
-  {
-    LOG_WARN << "Parse error: " << ex.what() << " | tried to parse json: " << json;
-    LOG_WARN << "Position of error: " << parser.errorPos();
-    return {ok::ErrorCode::ERROR_HTTP_CORRUPTED_JSON, std::make_shared<arangodb::velocypack::Builder>()};
-  }
-}
-inline std::tuple<ok::ErrorCode, std::string> getString(VPackSlice const &obj, std::string const &key) noexcept
-{
-  if (obj.hasKey(key) && obj[key].isString()) return {ok::ErrorCode::ERROR_NO_ERROR, obj[key].copyString()};
-  else
-    return {ok::ErrorCode::ERROR_NO_ERROR, ""};
-}
-}  // namespace velocypack
-}  // namespace arangodb

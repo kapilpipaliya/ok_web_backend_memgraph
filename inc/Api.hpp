@@ -89,31 +89,7 @@ public:
   WS_PATH_ADD("/ws");
   WS_PATH_LIST_END
 };
-/*class WsTest : public drogon::WebSocketController<WsTest>
-{
-public:
-  inline void handleNewConnection(drogon::HttpRequestPtr const &req, drogon::WebSocketConnectionPtr const &wsConnPtr) override
-  {
-    // set the endpoint
-    arangodb::ConnectionInfo info;
-    info.endpoint = "http+tcp://127.0.0.1:8529";
-    info.endpointType = arangodb::Endpoint::DomainType::IPV4;
-    info.encryptionType = arangodb::Endpoint::EncryptionType::NONE;
-    info.serverAddress = "127.0.0.1";
-    info.serverPort = 8529;
-    info.clientAddress = "127.0.0.1";
-    info.clientPort = 55566;
-    caf::anon_send(ok::smart_actor::supervisor::mainActor, save_v8_wsconnptr_atom_v, wsConnPtr, std::move(info));
-  }
-  inline void handleNewMessage(drogon::WebSocketConnectionPtr const &wsConnPtr, std::string &&message, drogon::WebSocketMessageType const &type) override
-  {
-    ws::sendMessageToMainActorV8(wsConnPtr, std::move(message), type);
-  }
-  inline void handleConnectionClosed(drogon::WebSocketConnectionPtr const &wsConnPtr) override { caf::anon_send(ok::smart_actor::supervisor::mainActor, conn_exit_v8_atom_v, wsConnPtr); }
-  WS_PATH_LIST_BEGIN
-  WS_PATH_ADD("/ws_test");
-  WS_PATH_LIST_END
-};*/
+
 namespace file
 {
 // todo check permission

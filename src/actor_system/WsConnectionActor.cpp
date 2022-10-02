@@ -1,8 +1,6 @@
 #include "actor_system/WsConnectionActor.hpp"
 #include "db/Session.hpp"
 #include "utils/BatchArrayMessage.hpp"
-#include "db/db_functions.hpp"
-#include "utils/GlobalSettings.hpp"
 #include <jsoncons_ext/msgpack/msgpack.hpp>
 #include "utils/ErrorConstants.hpp"
 #include <jsoncons/json.hpp>

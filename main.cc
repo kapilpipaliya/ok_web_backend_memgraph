@@ -1,10 +1,7 @@
 //#include "backward.hpp"
 #include <drogon/drogon.h>
 #include "actor_system/CAF.hpp"
-#include "db/db_functions.hpp"
-#include "utils/GlobalSettings.hpp"
 #include "utils/os_functions.hpp"
-#include "db/fuerteclientPool.hpp"
 #include "Api.hpp"
 #include "actor_system/WSEventMap.hpp"
 #include "db/mgclientPool.hpp"
@@ -20,8 +17,6 @@ void loadDrogonConfig(const std::string& file)
   ok::smart_actor::connection::impl::addMyRoute();
   ok::smart_actor::connection::impl::addAccountRoute();
   ok::smart_actor::connection::impl::addSuperRoutes();
-  ok::smart_actor::connection::impl::addAdminRoutes();
-  ok::smart_actor::connection::impl::addChatRoutes();
 }
 void runActorFramework()
 {
@@ -35,11 +30,6 @@ void runDrogon()
   ok::api::registerApi();
   ok::api::registerRegexApi();
   drogon::app().run();
-}
-void restoreGlobalDatabase()
-{
-  // ok::db::deleteDatabase("global");
-  // system("arangorestore --input-directory "dump" --all-databases true --create-database");
 }
 }  // namespace
 int main(int argc, char* argv[])
@@ -110,9 +100,6 @@ int main(int argc, char* argv[])
       }
     }
   }
-  ok::db::waitForFuerte();
-  restoreGlobalDatabase();
-  ok::db::initializeFuertePool(8);
   runActorFramework();
   runDrogon();
 }
