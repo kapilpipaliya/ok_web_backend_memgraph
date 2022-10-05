@@ -34,8 +34,8 @@ ws_connector_actor_int::behavior_type WsControllerActor(ws_connector_actor_int::
       [=](get_session_atom) { return self->state.session; },
       [=](set_context_atom, ok::smart_actor::connection::Session const &s)
       {
-        self->send(ok::smart_actor::supervisor::connectedActor, remove_atom_v, self->state.session, self);
-        self->send(ok::smart_actor::supervisor::connectedActor, caf::add_atom_v, s, self);
+        // self->send(ok::smart_actor::supervisor::connectedActor, remove_atom_v, self->state.session, self);
+        // self->send(ok::smart_actor::supervisor::connectedActor, caf::add_atom_v, s, self);
         self->state.session = std::move(s);
       },
       [=](std::string const &message, drogon::WebSocketMessageType const &type)
@@ -69,36 +69,31 @@ ws_connector_actor_int::behavior_type WsControllerActor(ws_connector_actor_int::
       [=](conn_exit_atom)
       {
         LOG_DEBUG << "exiting " << self->name();
-        for (auto &t : self->state.subscriptions) { self->send(t, conn_exit_atom_v, self); }
-        for (auto &t : self->state.chat_subscriptions) { self->send(t, conn_exit_atom_v, self); }
-        self->send(ok::smart_actor::supervisor::connectedActor, remove_atom_v, self->state.session, self);
         self->unbecome();
       },
   };
 }
 void sendJson(drogon::WebSocketConnectionPtr wsConnPtr, jsoncons::ojson const &json) noexcept
 {
-  if (ok::smart_actor::connection::getServerVal("msgpack"))
-  {
-    // https://stackoverflow.com/questions/658913/c-style-cast-from-unsigned-char-to-const-char
-    std::vector<uint8_t> v;
-    jsoncons::msgpack::encode_msgpack(json, v);
-    wsConnPtr->send(reinterpret_cast<char const *>(v.data()), v.size(), drogon::WebSocketMessageType::Binary);
-  }
-  else
-  {
+  // if (ok::smart_actor::connection::getServerVal("msgpack"))
+  // {
+  //   // https://stackoverflow.com/questions/658913/c-style-cast-from-unsigned-char-to-const-char
+  //   std::vector<uint8_t> v;
+  //   jsoncons::msgpack::encode_msgpack(json, v);
+  //   wsConnPtr->send(reinterpret_cast<char const *>(v.data()), v.size(), drogon::WebSocketMessageType::Binary);
+  // }
+  // else
+  // {
     std::string dump;
     json.dump(dump);
     wsConnPtr->send(dump, drogon::WebSocketMessageType::Text);
-  }
+  // }
 }
 void saveNewConnection(ws_connector_actor_int::stateful_pointer<ws_controller_state> self, ws_controller_state &state, std::string const &jwtEncoded, std::string const &firstSubDomain)
 {
   state.subDomain = firstSubDomain;
-  ok::db::authenticateAndSaveSession(jwtEncoded, state.session, state.subDomain);
-  /*if (isTest) {
-    self->send(ok::smart_actor::supervisor::connectedActor, caf::add_atom_v, state.session, self);
-    return; }*/
+  // ok::db::authenticateAndSaveSession(jwtEncoded, state.session, state.subDomain);
+
   auto memberMsg = ok::smart_actor::connection::wsMessageBase();
   if (!state.session.memberKey.empty())
   {
@@ -110,7 +105,7 @@ void saveNewConnection(ws_connector_actor_int::stateful_pointer<ws_controller_st
     ok::smart_actor::connection::addIsLoggedIn(memberMsg, false);
   }
   sendJson(state.wsConnPtr, memberMsg);
-  self->send(ok::smart_actor::supervisor::connectedActor, caf::add_atom_v, state.session, self);
+  // self->send(ok::smart_actor::supervisor::connectedActor, caf::add_atom_v, state.session, self);
 }
 std::tuple<ErrorCode, jsoncons::ojson> processEvent(jsoncons::ojson const &valin,
                                                     Session const &session,

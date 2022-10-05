@@ -6,14 +6,11 @@
 #include <jsoncons/json.hpp>
 #include <magic_enum.hpp>
 #include <utility>
-#include "mutate/MutateSchema.hpp"
 #include "actor_system/Routes.hpp"
 #include "caf/all.hpp"
 #include "pystring.hpp"
 #include "utils/json_functions.hpp"
 #include "utils/time_functions.hpp"
-#include "table/Table.hpp"
-#include "actor_system/MutateActors.hpp"
 #include "utils/os_functions.hpp"
 namespace ok::smart_actor
 {
@@ -46,53 +43,49 @@ void addAccountRoute()
   {
     auto &event = valin[eventNo][0];
     auto &args = valin[eventNo][1];
-    if (isDispatching) { ok::smart_actor::connection::addEventAndJson(resultMsg, event, args); }
-    else
-    {
-      currentActor->send(ok::smart_actor::supervisor::registerMutateActor, session, event, args, currentActor);
-    }
+    // if (isDispatching) { ok::smart_actor::connection::addEventAndJson(resultMsg, event, args); }
+    // else
+    // {
+    //   currentActor->send(ok::smart_actor::supervisor::registerMutateActor, session, event, args, currentActor);
+    // }
   };
   routeFunctions["register_member"] = [](RouteArgs)
   {
     auto &event = valin[eventNo][0];
     auto &args = valin[eventNo][1];
-    if (isDispatching) { ok::smart_actor::connection::addEventAndJson(resultMsg, event, args); }
-    else
-    {
-      currentActor->send(ok::smart_actor::supervisor::memberRegisterMutateActor, session, event, args, currentActor, subDomain);
-    }
+
   };
   routeFunctions["login"] = [](RouteArgs)
   {
     auto &event = valin[eventNo][0];
     auto &args = valin[eventNo][1];
-    if (isDispatching) { ok::smart_actor::connection::addEventAndJson(resultMsg, event, args); }
-    else
-    {
-      auto loginActor = currentActor->spawn(ok::smart_actor::auth::AuthLoginActor);
-      currentActor->send(loginActor, session, event, args, currentActor);
-    }
+    // if (isDispatching) { ok::smart_actor::connection::addEventAndJson(resultMsg, event, args); }
+    // else
+    // {
+    //   auto loginActor = currentActor->spawn(ok::smart_actor::auth::AuthLoginActor);
+    //   currentActor->send(loginActor, session, event, args, currentActor);
+    // }
   };
   routeFunctions["member_login"] = [](RouteArgs)
   {
     auto &event = valin[eventNo][0];
     auto &args = valin[eventNo][1];
-    if (isDispatching) { ok::smart_actor::connection::addEventAndJson(resultMsg, event, args); }
-    else
-    {
-      auto loginActor = currentActor->spawn(ok::smart_actor::auth::AuthMemberLoginActor);
-      currentActor->send(loginActor, session, event, args, currentActor, subDomain);
-    }
+    // if (isDispatching) { ok::smart_actor::connection::addEventAndJson(resultMsg, event, args); }
+    // else
+    // {
+    //   auto loginActor = currentActor->spawn(ok::smart_actor::auth::AuthMemberLoginActor);
+    //   currentActor->send(loginActor, session, event, args, currentActor, subDomain);
+    // }
   };
   routeFunctions["logout"] = [](RouteArgs)
   {
     auto &event = valin[eventNo][0];
     auto &args = valin[eventNo][1];
-    if (isDispatching) { ok::smart_actor::connection::addEventAndJson(resultMsg, event, args); }
-    else
-    {
-      currentActor->send(ok::smart_actor::supervisor::logoutMutateActor, session, event, currentActor);
-    }
+    // if (isDispatching) { ok::smart_actor::connection::addEventAndJson(resultMsg, event, args); }
+    // else
+    // {
+    //   currentActor->send(ok::smart_actor::supervisor::logoutMutateActor, session, event, currentActor);
+    // }
   };
   routeFunctions["confirm_email"] = [](RouteArgs)
   {

@@ -2,7 +2,7 @@
 #include <string>
 #include "db/Session.hpp"
 #include "utils/ErrorConstants.hpp"
-#include "db/db_functions.hpp"
+
 #include "actor_system/CAF.hpp"
 // #include "SimpleRequestHelper.hpp"
 // #include "SimpleRequest.hpp"
@@ -74,10 +74,6 @@ void registerApi()
                                 },
                                 {drogon::Get});*/
   drogon::app().registerHandler("/api/upload", &file::upload, {drogon::Post});
-  drogon::app().registerHandler("/api/download/{1}/{2}", &file::download, {drogon::Get});
-  drogon::app().registerHandler("/api/confirm/{1}/{2}", &member::confirm, {drogon::Get});
-  drogon::app().registerHandler("/api/health", &system_::showServerHealthReport, {drogon::Get});
-  drogon::app().registerHandler("/api/shutdown", &system_::gracefullyShutdown, {drogon::Get});
   drogon::app().registerHandler("/",
                                 [](drogon::HttpRequestPtr const &, std::function<void(drogon::HttpResponsePtr const &)> &&cb)
                                 {
@@ -139,69 +135,30 @@ void upload(drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpRe
     impl::sendFailure(ok::ErrorCode::ERROR_HTTP_UNAUTHORIZED, callback);
     return;
   }*/
-  if (auto [err, savedKeys] = impl::saveFiles(req, session); ok::isEr(err))
-  {
-    impl::sendFailure(err, callback);
-    return;
-  }
-  else
-  {
-    impl::sendSuccess(savedKeys, callback);
-  }
+  // if (auto [err, savedKeys] = impl::saveFiles(req, session); ok::isEr(err))
+  // {
+  //   impl::sendFailure(err, callback);
+  //   return;
+  // }
+  // else
+  // {
+  //   impl::sendSuccess(savedKeys, callback);
+  // }
 }
-void download(drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpResponsePtr const &)> &&callback, int version, std::string const &key)
-{
-  auto session = impl::getSession(req);
-  // disabling member check, anyone can upload.
-  /*if (!impl::initializeUser(session))
-  {
-    impl::sendFailure(ok::ErrorCode::ERROR_HTTP_UNAUTHORIZED, callback);
-    return;
-  }*/
-  if (auto fileName = impl::getFileName(key, session); !fileName.empty())
-  {
-    auto filePath = impl::makePath(fileName, session);
-    auto resp = drogon::HttpResponse::newFileResponse(filePath);
-    resp->addHeader("Cache-Control", "max-age=2592000, public");
-    // resp->setExpiredTime(0);
-    callback(resp);
-  }
-  else
-  {
-    impl::sendFailure(ok::ErrorCode::ERROR_HTTP_NOT_FOUND, callback);
-    return;
-  }
-}
+
 namespace impl
 {
 ok::smart_actor::connection::Session getSession(drogon::HttpRequestPtr const &req)
 {
   ok::smart_actor::connection::Session session;
-  auto jwtEncodedCookie = req->getCookie("jwt");
-  auto subdomain = ok::utils::html::getSubdomain(req->getHeader("host"));
-  ok::db::authenticateAndSaveSession(jwtEncodedCookie, session, subdomain);
+  // auto jwtEncodedCookie = req->getCookie("jwt");
+  // auto subdomain = ok::utils::html::getSubdomain(req->getHeader("host"));
+  // ok::db::authenticateAndSaveSession(jwtEncodedCookie, session, subdomain);
   return session;
 }
 bool initializeUser(ok::smart_actor::connection::Session &session) noexcept { return session.sessionKey.empty() ? false : true; }
 bool isPermissionsOk() noexcept { return true; }
-std::tuple<ErrorCode, std::vector<std::string> > saveFiles(drogon::HttpRequestPtr const &req, ok::smart_actor::connection::Session &session) noexcept
-{
-  drogon::MultiPartParser fileUpload;
-  if (fileUpload.parse(req) == 0)
-  {
-    // LOG_DEBUG << "upload good!";
-    auto files = fileUpload.getFiles();
-    // LOG_DEBUG << "file size=" << files.size();
-    std::vector<std::string> savedKeys;
-    for (auto const &file : files)
-    {
-      if (auto [er, key] = saveTo(file, file.fileContent(), session); !key.empty()) { savedKeys.push_back(key); }
-    }
-    if (savedKeys.empty()) { return {ok::ErrorCode::ERROR_FILE_NOT_FOUND, {}}; }
-    return {ok::ErrorCode::ERROR_NO_ERROR, savedKeys};
-  }
-  return {ok::ErrorCode::ERROR_FILE_NOT_FOUND, {}};
-}
+
 void sendSuccess(std::vector<std::string> const &savedKeys, std::function<void(drogon::HttpResponsePtr const &)> &callback) noexcept
 {
   jsoncons::ojson j;
@@ -220,79 +177,30 @@ void sendFailure(ErrorCode const error, std::function<void(drogon::HttpResponseP
   auto resp = drogon::HttpResponse::newHttpJsonResponse(json);
   callback(resp);
 }
-std::string getFileName(std::string const &key, ok::smart_actor::connection::Session &session) noexcept
-{
-  auto query = "RETURN DOCUMENT('upload/" + key + "')";
-  auto [erDb, response] = Api::Cursor::PostCursor::request(session.database, query, {});
-  if (isEr(erDb))
-  {
-    if (response)
-    {
-      auto slice = response->slices().front();
-      LOG_FATAL << "Error: " << slice.toJson();
-    }
-    LOG_FATAL << "error in query. session not found";
-    return "";
-  }
-  auto slice = response->slices().front();
-  if (auto result = slice.get("result"); result.length() == 0)
-  {
-    LOG_DEBUG << "No Document" << result.toString();
-    return "";
-  }
-  else
-  {
-    return result[0].get("name").copyString();
-  }
-  return "";
-}
-std::string makePath(std::string const &fileName, ok::smart_actor::connection::Session &session) noexcept
-{
-  auto userDirectory = ok::smart_actor::connection::drogonRoot + "/user_data/" + session.database;
-  return userDirectory + "/" + fileName;
-}
-bool saveThumbnails(std::string const &fileName) noexcept
-{
-  // if(req.file.mimetype.substr(0, 6) == 'image/')
-  return true;
-}
-std::tuple<ok::ErrorCode, DocumentKey> saveTo(drogon::HttpFile const &file, const std::string_view &fileContent, ok::smart_actor::connection::Session &session) noexcept
-{
-  auto fileName = drogon::utils::getUuid() + "_" + file.getFileName();
-  auto filePath = makePath(fileName, session);
-  std::ofstream file_ofstream(filePath, std::ofstream::out);
-  if (!file_ofstream) { LOG_DEBUG << "cant uploaded file:" << filePath << " Error: " << strerror(errno) << " working directory" << std::filesystem::current_path(); }
-  if (file_ofstream.is_open())
-  {
-    file_ofstream << fileContent;
-    file_ofstream.close();
-    auto [er, key] = ok::db::saveFileToDatabase(file, fileName, session);
-    saveThumbnails(fileName);
-    LOG_DEBUG << "save uploaded file:" << fileName << " path: " << filePath;
-    return {er, key};
-  }
-  LOG_ERROR << "save failed!";
-  return {ok::ErrorCode::ERROR_INTERNAL, ""};
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }  // namespace impl
 }  // namespace file
 namespace member
 {
 void confirm(drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpResponsePtr const &)> &&callback, std::string const &key, std::string const &token)
 {
-  if (auto [er, dbName, memberKey] = ok::db::confirmMember(key, token); ok::isEr(er))
-  {
-    auto resp = drogon::HttpResponse::newHttpResponse();
-    resp->setBody(ok::errno_string(er));
-    callback(resp);
-  }
-  else
-  {
-    auto resp = drogon::HttpResponse::newHttpResponse();
-    resp->setBody("success");
-    callback(resp);
-    // todo: send thank you email.
-  }
 }
 }  // namespace member
 namespace system_

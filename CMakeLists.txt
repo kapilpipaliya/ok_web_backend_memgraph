@@ -53,8 +53,8 @@ target_link_libraries(${PROJECT_NAME}  PRIVATE GTest::gmock GTest::gtest GTest::
 find_package(cpp-jwt CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE cpp-jwt::cpp-jwt)
 
-find_path(PARALLEL_HASHMAP_INCLUDE_DIRS "parallel_hashmap/btree.h")
-target_include_directories(${PROJECT_NAME} PRIVATE ${PARALLEL_HASHMAP_INCLUDE_DIRS})
+#find_path(PARALLEL_HASHMAP_INCLUDE_DIRS "parallel_hashmap/btree.h")
+#target_include_directories(${PROJECT_NAME} PRIVATE ${PARALLEL_HASHMAP_INCLUDE_DIRS})
 
 find_package(tsl-ordered-map CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE tsl::ordered_map)

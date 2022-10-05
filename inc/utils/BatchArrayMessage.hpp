@@ -1,13 +1,9 @@
 #pragma once
 #include "utils/ErrorConstants.hpp"
 #include "alias.hpp"
-#include "mutate/MutateSchema.hpp"
+
 namespace ok
 {
-namespace mutate_schema
-{
-struct Field;
-}
 namespace smart_actor::connection
 {
 struct Member;
@@ -32,12 +28,6 @@ jsoncons::ojson addIsLoggedIn(jsoncons::ojson &array, bool v) noexcept;
 inline jsoncons::ojson addSuccess(jsoncons::ojson &&array, WsEvent const &event) noexcept { return addSuccess(array, event); };
 jsoncons::ojson addFailure(jsoncons::ojson &array, WsEvent const &event, const ok::ErrorCode errorCode) noexcept;
 inline jsoncons::ojson addFailure(jsoncons::ojson &&array, WsEvent const &event, const ok::ErrorCode errorCode) noexcept { return addFailure(array, event, errorCode); }
-jsoncons::ojson addFailure(jsoncons::ojson &array, WsEvent const &event, const ok::ErrorCode errorCode, ok::mutate_schema::Fields const &fields) noexcept;
-inline jsoncons::ojson addFailure(jsoncons::ojson &&array, WsEvent const &event, const ok::ErrorCode errorCode, ok::mutate_schema::Fields const &fields) noexcept
-{
-  return addFailure(array, event, errorCode, fields);
-}
-jsoncons::ojson addEventAndJson(jsoncons::ojson &array, WsEvent const &event, VPackSlice const &json) noexcept;
 jsoncons::ojson addCurrentMember(jsoncons::ojson &array, Database const &database, DocumentKey const &memberKey) noexcept;
 jsoncons::ojson addEmptyMember(jsoncons::ojson &array) noexcept;
 jsoncons::ojson addRedirection(jsoncons::ojson &array, std::string const &link, std::string const &msg = "", int const timeout = 0) noexcept;

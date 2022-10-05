@@ -1,7 +1,6 @@
 #include "utils/BatchArrayMessage.hpp"
 #include <trantor/utils/Logger.h>
 #include "utils/html_functions.hpp"
-#include "db/db_functions.hpp"
 #include "utils/ErrorConstants.hpp"
 // #include "MutateSchema.hpp"
 #include "drogon/Cookie.h"
@@ -56,66 +55,10 @@ jsoncons::ojson addFailure(jsoncons::ojson &array, WsEvent const &event, const o
   array.push_back(one);
   return array;
 }
-jsoncons::ojson addFailure(jsoncons::ojson &array, WsEvent const &event, const ErrorCode errorCode, const ok::mutate_schema::Fields &fields) noexcept
-{
-  // [e,[0,"desc", fields]]
-  jsoncons::ojson one = jsoncons::ojson::array();
-  one.push_back(event);
-  jsoncons::ojson r = jsoncons::ojson::object();
-  auto isEr = ok::isEr(errorCode);
-  r["error"] = isEr;
-  if (isEr)
-  {
-    r["description"] = ok::errno_string(errorCode);
-    if (errorCode == ok::ErrorCode::ERROR_FORM_FIELD_ERROR || errorCode == ok::ErrorCode::UNIQUE_ERROR || errorCode == ok::ErrorCode::ERROR_FORM_EMPTY)
-      r["fieldErrors"] = (ok::mutate_schema::fieldErrors(fields));
-  }
-  one.push_back(r);
-  array.push_back(one);
-  return array;
-}
-jsoncons::ojson addEventAndJson(jsoncons::ojson &array, WsEvent const &event, VPackSlice const &json) noexcept
-{
-  // if (!json.isNull()){
-  jsoncons::ojson a = jsoncons::ojson::array();
-  a.push_back(event);
-  a.push_back(jsoncons::ojson::parse(json.toJson()));
-  array.push_back(a);
-  //}
-  return array;
-}
+
 jsoncons::ojson addCurrentMember(jsoncons::ojson &array, Database const &database, DocumentKey const &memberKey) noexcept
 {
-  // [e,member]
-  if (database.empty())
-  {
-    LOG_DEBUG << "Database Must not be empty, while fetching member.";
-    return array;
-  }
-  WsEvent event = jsoncons::ojson::array();
-  event.push_back("get");
-  event.push_back("current_member_event");
-  event.push_back(0);
-  jsoncons::ojson one = jsoncons::ojson::array();
-  one.push_back(event);
-  jsoncons::ojson r;
-  if (auto [er, myResp] = ok::db::getDocumentWithProjection(database, "member", memberKey, ""); ok::isEr(er))
-  {
-    // error
-  }
-  else
-  {
-    auto slice = myResp->slices().front().get("result");
-    if (slice.length() == 1)
-    {
-      r["_key"] = slice[0].get("_key").copyString();
-      r["email"] = slice[0].get("email").copyString();
-      if (slice[0].hasKey("firstName")) r["firstName"] = slice[0].get("firstName").copyString();
-      if (slice[0].hasKey("firstName")) r["lastName"] = slice[0].get("lastName").copyString();
-    }
-  }
-  one.push_back(r);
-  array.push_back(one);
+  
   return array;
 }
 jsoncons::ojson addEmptyMember(jsoncons::ojson &array) noexcept
@@ -200,11 +143,6 @@ jsoncons::ojson addLogout(jsoncons::ojson &array) noexcept
   jsoncons::ojson j;
   one.push_back(j);
   array.push_back(one);
-  return array;
-}
-jsoncons::ojson addNotification(jsoncons::ojson &array, const NotificationType type, int const timeout) noexcept
-{
-  // Todo make this working.
   return array;
 }
 jsoncons::ojson addIsLoggedIn(jsoncons::ojson &array, bool v) noexcept

@@ -1,12 +1,10 @@
 #include "actor_system/MainActor.hpp"
 #include "utils/BatchArrayMessage.hpp"
-#include "actor_system/GlobalActor.hpp"
+#include "actor_system/WsConnectionActor.hpp"
 // #include "actor_system/WsConnectionV8Actor.hpp"
 // #include "actor_system/V8StateActor.hpp"
 #include <magic_enum.hpp>
-#include "actor_system/MutateActors.hpp"
-#include "actor_system/TableActor.hpp"
-#include "actor_system/IntegrationActors.hpp"
+
 namespace ok::smart_actor
 {
 namespace supervisor
@@ -66,154 +64,22 @@ main_actor_int::behavior_type MainActor(MainActorPointer self)
 }
 namespace impl
 {
-table_actor_int<ws_connector_actor_int> newSuperListAct(
-    MainActorPointer act_, std::string const &id, table_actor_int<ws_connector_actor_int> &act, std::string const &actor_id, std::string const &db, bool ck, bool permissionCheck)
-{
-  if (act) { return act; }
-  else
-  {
-    act = act_->spawn(ok::smart_actor::table_actor::TableActor<ws_connector_actor_int>, db, id, ck, permissionCheck);
-    act_->monitor(act);
-    ok::smart_actor::supervisor::listActors.insert({id, act});
-    return act;
-  }
-}
+
 void spawnAndMonitorSuperActor(MainActorPointer act) noexcept
 {
-  ok::smart_actor::supervisor::connectedActor = act->spawn(ok::smart_actor::connection::LoginStatusActor);
-  act->monitor(ok::smart_actor::supervisor::connectedActor);
-  ok::smart_actor::supervisor::sessionCleanActor = act->spawn(ok::smart_actor::connection::SessionCleanActor);
-  act->send(ok::smart_actor::supervisor::sessionCleanActor, session_clean_atom_v);  // self will send message when it down
-  act->monitor(ok::smart_actor::supervisor::sessionCleanActor);
-  ok::smart_actor::supervisor::databaseHealthCheckActor = act->spawn(ok::smart_actor::connection::DBHealthCheckActor);
-  act->send(ok::smart_actor::supervisor::databaseHealthCheckActor, db_health_check_atom_v);
-  act->monitor(ok::smart_actor::supervisor::databaseHealthCheckActor);
-  ok::smart_actor::supervisor::globalActor = act->spawn(GlobalActor);
-  // ok::smart_actor::supervisor::v8StateActor = act->spawn(ok::V8StateActor);
-  act->monitor(ok::smart_actor::supervisor::globalActor);
-  // act->monitor(ok::smart_actor::supervisor::v8StateActor);
+  // ok::smart_actor::supervisor::connectedActor = act->spawn(ok::smart_actor::connection::LoginStatusActor);
+  // act->monitor(ok::smart_actor::supervisor::connectedActor);
+  // ok::smart_actor::supervisor::sessionCleanActor = act->spawn(ok::smart_actor::connection::SessionCleanActor);
+  // act->send(ok::smart_actor::supervisor::sessionCleanActor, session_clean_atom_v);  // self will send message when it down
+  // act->monitor(ok::smart_actor::supervisor::sessionCleanActor);
+  // ok::smart_actor::supervisor::databaseHealthCheckActor = act->spawn(ok::smart_actor::connection::DBHealthCheckActor);
+  // act->send(ok::smart_actor::supervisor::databaseHealthCheckActor, db_health_check_atom_v);
+  // act->monitor(ok::smart_actor::supervisor::databaseHealthCheckActor);
+
   // List:
-  newSuperListAct(act, "user", ok::smart_actor::supervisor::userListActor, "user", "user", false, true);
-  newSuperListAct(act, "schema", ok::smart_actor::supervisor::schemaListActor, "schema", "global", false, true);
-  newSuperListAct(act, "translation", ok::smart_actor::supervisor::translationListActor, "translation", "global", false, true);
-  newSuperListAct(act, "session", ok::smart_actor::supervisor::sessionListActor, "session", "user", false, true);
-  newSuperListAct(act, "confirm", ok::smart_actor::supervisor::confirmListActor, "confirm", "user", false, true);
-  newSuperListAct(act, "color", ok::smart_actor::supervisor::colorListActor, "color", "global", false, true);
-  newSuperListAct(act, "permission", ok::smart_actor::supervisor::permissionListActor, "permission", "global", false, true);
-  newSuperListAct(act, "role", ok::smart_actor::supervisor::roleListActor, "role", "global", false, true);
-  // newSuperListAct(act, "support", ok::smart_actor::supervisor::supportListActor, "support", "user", false, false);
-  // newSuperListAct(act, "support_admin", ok::smart_actor::supervisor::supportAdminListActor, "support_admin", "user", false, false);
-  newSuperListAct(act, "template", ok::smart_actor::supervisor::templateListActor, "template", "global", false, true);
-  newSuperListAct(act, "menu", ok::smart_actor::supervisor::menuListActor, "menu", "global", false, true);
-  newSuperListAct(act, "node", ok::smart_actor::supervisor::nodeListActor, "node", "_system", false, false);
-  newSuperListAct(act, "edge", ok::smart_actor::supervisor::edgeListActor, "edge", "_system", false, false);
-  newSuperListAct(act, "attribute", ok::smart_actor::supervisor::attributeListActor, "attribute", "_system", false, false);
+
   // Mutate:
-  ok::smart_actor::supervisor::emailMutateActor = act->spawn(ok::smart_actor::integrations::email::EmailActor);
-  act->monitor(ok::smart_actor::supervisor::emailMutateActor);
-  //
-  ok::smart_actor::supervisor::registerMutateActor = act->spawn(ok::smart_actor::auth::AuthRegisterActor);
-  act->monitor(ok::smart_actor::supervisor::registerMutateActor);
-  //
-  ok::smart_actor::supervisor::confirmMutateActor = act->spawn(ok::smart_actor::auth::AuthConfirmationActor);
-  act->monitor(ok::smart_actor::supervisor::confirmMutateActor);
-  //
-  ok::smart_actor::supervisor::memberRegisterMutateActor = act->spawn(ok::smart_actor::auth::AuthMemberRegisterActor);
-  act->monitor(ok::smart_actor::supervisor::memberRegisterMutateActor);
-  //
-  ok::smart_actor::supervisor::logoutMutateActor = act->spawn(ok::smart_actor::auth::AuthLogoutActor);
-  act->monitor(ok::smart_actor::supervisor::logoutMutateActor);
-  //
-  using LA = std::vector<table_actor_int<ws_connector_actor_int>>;
-  ok::smart_actor::supervisor::userMutateActor = act->spawn(ok::smart_actor::global_collections::MutateUserActor, ok::smart_actor::supervisor::userListActor, "user", "user");
-  act->monitor(ok::smart_actor::supervisor::userMutateActor);
-  ok::smart_actor::supervisor::mutateActors.insert({"user", ok::smart_actor::supervisor::userMutateActor});
-  ok::smart_actor::supervisor::schemaMutateActor = act->spawn(ok::smart_actor::global_collections::GlobalSchemaMutateActor, ok::smart_actor::supervisor::schemaListActor, "global", "schema");
-  act->monitor(ok::smart_actor::supervisor::schemaMutateActor);
-  ok::smart_actor::supervisor::mutateActors.insert({"schema", ok::smart_actor::supervisor::schemaMutateActor});
-  ok::smart_actor::supervisor::translationMutateActor = act->spawn(ok::smart_actor::user::BaseMutateActor<ws_connector_actor_int>,
-                                                                   LA{ok::smart_actor::supervisor::translationListActor},
-                                                                   "global",
-                                                                   "translation",
-                                                                   ok::smart_actor::user::emptyPreProcess,
-                                                                   ok::smart_actor::user::emptyPreProcess);
-  act->monitor(ok::smart_actor::supervisor::translationMutateActor);
-  ok::smart_actor::supervisor::mutateActors.insert({"translation", ok::smart_actor::supervisor::translationMutateActor});
-  ok::smart_actor::supervisor::sessionMutateActor = act->spawn(ok::smart_actor::user::BaseMutateActor<ws_connector_actor_int>,
-                                                               LA{ok::smart_actor::supervisor::sessionListActor},
-                                                               "user",
-                                                               "session",
-                                                               ok::smart_actor::user::emptyPreProcess,
-                                                               ok::smart_actor::user::emptyPreProcess);
-  act->monitor(ok::smart_actor::supervisor::sessionMutateActor);
-  ok::smart_actor::supervisor::mutateActors.insert({"session", ok::smart_actor::supervisor::sessionMutateActor});
-  //  ok::smart_actor::supervisor::confirmMutateActor = act->spawn(ok::smart_actor::user::BaseMutateActor<ws_connector_actor_int>, LA{ok::smart_actor::supervisor::confirmListActor}, "user", "confirm",
-  //  ok::smart_actor::user::emptyPreProcess); act->monitor(ok::smart_actor::supervisor::confirmMutateActor); ok::smart_actor::supervisor::mutateActors.insert({"confirm",
-  //  ok::smart_actor::supervisor::confirmMutateActor});
-  ok::smart_actor::supervisor::colorMutateActor = act->spawn(ok::smart_actor::global_collections::MutateGlobalColorActor, ok::smart_actor::supervisor::colorListActor, "global", "color");
-  act->monitor(ok::smart_actor::supervisor::colorMutateActor);
-  ok::smart_actor::supervisor::mutateActors.insert({"color", ok::smart_actor::supervisor::colorMutateActor});
-  ok::smart_actor::supervisor::permissionMutateActor =
-      act->spawn(ok::smart_actor::global_collections::MutateGlobalPermissionActor, ok::smart_actor::supervisor::permissionListActor, "global", "permission");
-  act->monitor(ok::smart_actor::supervisor::permissionMutateActor);
-  ok::smart_actor::supervisor::mutateActors.insert({"permission", ok::smart_actor::supervisor::permissionMutateActor});
-  ok::smart_actor::supervisor::roleMutateActor = act->spawn(ok::smart_actor::global_collections::MutateGlobalRoleActor, ok::smart_actor::supervisor::roleListActor, "global", "role");
-  act->monitor(ok::smart_actor::supervisor::roleMutateActor);
-  ok::smart_actor::supervisor::mutateActors.insert({"role", ok::smart_actor::supervisor::roleMutateActor});
-  ok::smart_actor::supervisor::menuMutateActor = act->spawn(ok::smart_actor::global_collections::MutateGlobalMenuActor, ok::smart_actor::supervisor::menuListActor, "global", "menu");
-  act->monitor(ok::smart_actor::supervisor::menuMutateActor);
-  ok::smart_actor::supervisor::mutateActors.insert({"menu", ok::smart_actor::supervisor::menuMutateActor});
-  ok::smart_actor::supervisor::nodeMutateActor = act->spawn(ok::smart_actor::user::BaseMutateActor<ws_connector_actor_int>,
-                                                            LA{ok::smart_actor::supervisor::nodeListActor},
-                                                            "_system",
-                                                            "node",
-                                                            ok::smart_actor::user::emptyPreProcess,
-                                                            ok::smart_actor::user::emptyPreProcess);
-  act->monitor(ok::smart_actor::supervisor::nodeMutateActor);
-  ok::smart_actor::supervisor::mutateActors.insert({"node", ok::smart_actor::supervisor::nodeMutateActor});
-  ok::smart_actor::supervisor::edgeMutateActor = act->spawn(ok::smart_actor::user::BaseMutateActor<ws_connector_actor_int>,
-                                                            LA{ok::smart_actor::supervisor::edgeListActor},
-                                                            "_system",
-                                                            "edge",
-                                                            ok::smart_actor::user::emptyPreProcess,
-                                                            ok::smart_actor::user::emptyPreProcess);
-  act->monitor(ok::smart_actor::supervisor::edgeMutateActor);
-  ok::smart_actor::supervisor::mutateActors.insert({"edge", ok::smart_actor::supervisor::edgeMutateActor});
-  ok::smart_actor::supervisor::attributeMutateActor = act->spawn(ok::smart_actor::user::BaseMutateActor<ws_connector_actor_int>,
-                                                                 LA{ok::smart_actor::supervisor::attributeListActor},
-                                                                 "_system",
-                                                                 "attribute",
-                                                                 ok::smart_actor::user::emptyPreProcess,
-                                                                 ok::smart_actor::user::emptyPreProcess);
-  act->monitor(ok::smart_actor::supervisor::attributeMutateActor);
-  ok::smart_actor::supervisor::mutateActors.insert({"attribute", ok::smart_actor::supervisor::attributeMutateActor});
-  ok::smart_actor::supervisor::templateMutateActor = act->spawn(ok::smart_actor::user::BaseMutateActor<ws_connector_actor_int>,
-                                                                LA{ok::smart_actor::supervisor::templateListActor},
-                                                                "global",
-                                                                "template",
-                                                                ok::smart_actor::user::emptyPreProcess,
-                                                                ok::smart_actor::user::emptyPreProcess);
-  act->monitor(ok::smart_actor::supervisor::templateMutateActor);
-  ok::smart_actor::supervisor::mutateActors.insert({"template", ok::smart_actor::supervisor::templateMutateActor});
-  /*else if (id == "support")
-  {
-    if (ok::smart_actor::supervisor::supportMutateActor) { return ok::smart_actor::supervisor::supportMutateActor; }
-    auto schemaKey = id;
-    auto listActors = std::vector<table_actor_int<ws_connector_actor_int>>{ok::smart_actor::supervisor::(act, "support"), ok::smart_actor::supervisor::(act, "support_admin")};
-    ok::smart_actor::supervisor::supportMutateActor = act->spawn(ok::smart_actor::user::BaseMutateActor<ws_connector_actor_int>, listActors, "user", schemaKey, ok::smart_actor::user::emptyPreProcess);
-    act->monitor(ok::smart_actor::supervisor::supportMutateActor);
-    ok::smart_actor::supervisor::mutateActors.insert({schemaKey, ok::smart_actor::supervisor::supportMutateActor});
-    return ok::smart_actor::supervisor::supportMutateActor;
-  }
-  else if (id == "support_admin")
-  {
-    if (ok::smart_actor::supervisor::supportAdminMutateActor) { return ok::smart_actor::supervisor::supportAdminMutateActor; }
-    auto schemaKey = id;
-    auto listActors = std::vector<table_actor_int<ws_connector_actor_int>>{ok::smart_actor::supervisor::(act, "support_admin"), ok::smart_actor::supervisor::(act, "support")};
-    ok::smart_actor::supervisor::supportAdminMutateActor = act->spawn(ok::smart_actor::user::BaseMutateActor<ws_connector_actor_int>, listActors, "user", schemaKey,
-  ok::smart_actor::user::emptyPreProcess); act->monitor(ok::smart_actor::supervisor::supportAdminMutateActor); ok::smart_actor::supervisor::mutateActors.insert({schemaKey,
-  ok::smart_actor::supervisor::supportAdminMutateActor}); return ok::smart_actor::supervisor::supportAdminMutateActor;
-  }*/
+ 
 }
 void spanAndSaveConnectionActor(MainActorPointer act, drogon::WebSocketConnectionPtr const &wsConnPtr, std::string const &jwtEncoded, std::string const &firstSubDomain) noexcept
 {
@@ -289,8 +155,8 @@ void connectionExit(MainActorPointer act, drogon::WebSocketConnectionPtr const &
 }*/
 void shutdownNow(MainActorPointer act) noexcept
 {
-  act->demonitor(ok::smart_actor::supervisor::globalActor.address());
-  act->send(ok::smart_actor::supervisor::globalActor, shutdown_atom_v);
+
+/*
   // act->demonitor(ok::smart_actor::supervisor::v8StateActor.address());
   // act->send(ok::smart_actor::supervisor::v8StateActor, caf::close_atom_v);
   act->demonitor(ok::smart_actor::supervisor::connectedActor.address());
@@ -361,6 +227,7 @@ void shutdownNow(MainActorPointer act) noexcept
   act->send(ok::smart_actor::supervisor::attributeMutateActor, conn_exit_atom_v);
   act->demonitor(ok::smart_actor::supervisor::templateMutateActor.address());
   act->send(ok::smart_actor::supervisor::templateMutateActor, conn_exit_atom_v);
+  */
   act->unbecome();
   //
   // act->send(a, conn_exit_atom_v);

@@ -20,8 +20,8 @@ void loadDrogonConfig(const std::string& file)
 }
 void runActorFramework()
 {
-  ok::db::seed::newUserDatabase();
-  ok::smart_actor::connection::fetch();
+  // ok::db::seed::newUserDatabase();
+  // ok::smart_actor::connection::fetch();
   ok::smart_actor::supervisor::initialiseMainActor();
   caf::anon_send(ok::smart_actor::supervisor::mainActor, spawn_and_monitor_atom_v);
 }
@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 {
   if (argc < 1) LOG_DEBUG << "Arguments should be > 1";
   loadDrogonConfig(argv[1]);
-  ok::smart_actor::connection::setGlobalVariables();
+  // ok::smart_actor::connection::setGlobalVariables();
   ok::db::initializeMemGraphPool(8);
   auto response = ok::db::memgraph_conns.requestDataRaw("", "MATCH (n)-[r]->(m) RETURN n,r,m;");
   for (auto& d : response)

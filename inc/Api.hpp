@@ -95,14 +95,12 @@ namespace file
 // todo check permission
 void upload(drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpResponsePtr const &)> &&callback);
 // todo check permissions
-void download(drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpResponsePtr const &)> &&callback, int version, std::string const &key);
 namespace impl
 {
 ok::smart_actor::connection::Session getSession(drogon::HttpRequestPtr const &req);
 bool initializeUser(ok::smart_actor::connection::Session &session) noexcept;
 bool isPermissionsOk() noexcept;
 // Fix this
-std::tuple<ErrorCode, std::vector<std::string> > saveFiles(drogon::HttpRequestPtr const &req, ok::smart_actor::connection::Session &session) noexcept;
 void sendSuccess(std::vector<std::string> const &savedKeys, std::function<void(drogon::HttpResponsePtr const &)> &callback) noexcept;
 void sendFailure(ErrorCode const error, std::function<void(drogon::HttpResponsePtr const &)> &callback) noexcept;
 std::string getFileName(std::string const &key, ok::smart_actor::connection::Session &session) noexcept;
