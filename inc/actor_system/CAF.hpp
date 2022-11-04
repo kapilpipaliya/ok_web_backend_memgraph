@@ -14,70 +14,30 @@ CAF_ALLOW_UNSAFE_MESSAGE_TYPE(drogon::WebSocketConnectionPtr)
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(drogon::WebSocketMessageType)
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(jsoncons::ojson)
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(ok::smart_actor::connection::Session)
-// CAF_ALLOW_UNSAFE_MESSAGE_TYPE(arangodb::ConnectionInfo) 
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(ok::ErrorCode)
 CAF_ADD_ATOM(okproject, conn_exit_old_atom);
 CAF_ADD_ATOM(okproject, conn_exit_v8_atom);
 CAF_ADD_ATOM(okproject, conn_exit_atom);
 CAF_ADD_ATOM(okproject, shutdown_atom);
-CAF_ADD_ATOM(okproject, schema_changed_atom);
-CAF_ADD_ATOM(okproject, super_list_atom);
-CAF_ADD_ATOM(okproject, global_list_atom);
 CAF_ADD_ATOM(okproject, logout_atom);
-CAF_ADD_ATOM(okproject, super_mutate_atom);
-CAF_ADD_ATOM(okproject, user_mutate_atom);
-CAF_ADD_ATOM(okproject, erase_atom);
 CAF_ADD_ATOM(okproject, send_email_atom);
 CAF_ADD_ATOM(okproject, spawn_and_monitor_atom);
 CAF_ADD_ATOM(okproject, save_old_wsconnptr_atom);
-CAF_ADD_ATOM(okproject, save_v8_wsconnptr_atom);
 CAF_ADD_ATOM(okproject, save_new_wsconnptr_atom);
 CAF_ADD_ATOM(okproject, pass_to_ws_connection_atom);
-CAF_ADD_ATOM(okproject, pass_to_ws_v8_connection_atom);
-CAF_ADD_ATOM(okproject, pass_to_browser_actor_atom);
-CAF_ADD_ATOM(okproject, subscribe_to_total_ws_connections_atom);
-CAF_ADD_ATOM(okproject, unsubscribe_to_total_ws_connections_atom);
-CAF_ADD_ATOM(okproject, backup_atom);
-CAF_ADD_ATOM(okproject, db_health_check_atom);
 CAF_ADD_ATOM(okproject, session_clean_atom);
-CAF_ADD_ATOM(okproject, remove_atom);
-CAF_ADD_ATOM(okproject, send_to_same_browser_tab_atom);
 CAF_ADD_ATOM(okproject, set_context_atom);
 CAF_ADD_ATOM(okproject, dispatch_atom);
-CAF_ADD_ATOM(okproject, send_to_one_atom);
-CAF_ADD_ATOM(okproject, get_initial_data_atom);
-CAF_ADD_ATOM(okproject, send_to_one_database_actors_atom);
-CAF_ADD_ATOM(okproject, table_dispatch_atom);
-CAF_ADD_ATOM(okproject, table_erase_atom);
-CAF_ADD_ATOM(okproject, end_conversation_atom);
-CAF_ADD_ATOM(okproject, file_notify_atom);
-CAF_ADD_ATOM(okproject, insert_atom);
-CAF_ADD_ATOM(okproject, insert_and_get_atom);
-CAF_ADD_ATOM(okproject, sub_atom);
 CAF_ADD_ATOM(okproject, get_session_atom);
-CAF_ADD_ATOM(okproject, get_cloud_actor_atom);
-CAF_ADD_ATOM(okproject, super_email_atom);
-CAF_ADD_ATOM(okproject, super_auth_logout_atom);
-CAF_ADD_ATOM(okproject, super_subdomain_mregister_mutate_atom);
-CAF_ADD_ATOM(okproject, super_register_mutate_atom);
-CAF_ADD_ATOM(okproject, super_confirm_mutate_atom);
-CAF_ADD_ATOM(okproject, create_message_atom);
-CAF_ADD_ATOM(okproject, modify_participan_atom);
-CAF_ADD_ATOM(okproject, join_participant_atom);
-CAF_ADD_ATOM(okproject, typing_event_atom);
-CAF_ADD_ATOM(okproject, get_conversation_list_actor_atom);
-CAF_ADD_ATOM(okproject, get_message_list_actor_atom);
-CAF_ADD_ATOM(okproject, get_participant_list_actor_atom);
-CAF_ADD_ATOM(okproject, get_conversation_muate_actor_atom);
-CAF_ADD_ATOM(okproject, get_message_muate_actor_atom);
-CAF_ADD_ATOM(okproject, get_participant_muate_actor_atom);
+CAF_ADD_ATOM(okproject, create_atom);
+CAF_ADD_ATOM(okproject, set_atom);
+CAF_ADD_ATOM(okproject, remove_atom);
 CAF_ADD_TYPE_ID(okproject, (drogon::WebSocketConnectionPtr))
 CAF_ADD_TYPE_ID(okproject, (drogon::WebSocketMessageType))
 CAF_ADD_TYPE_ID(okproject, (jsoncons::ojson))
 CAF_ADD_TYPE_ID(okproject, (ok::smart_actor::connection::Session))
 CAF_ADD_TYPE_ID(okproject, (std::vector<std::string>))
 CAF_ADD_TYPE_ID(okproject, (std::unordered_set<std::string>))
-// CAF_ADD_TYPE_ID(okproject, (arangodb::ConnectionInfo))
 CAF_ADD_TYPE_ID(okproject, (ok::ErrorCode))
 
 using ws_connector_actor_int = caf::typed_actor<caf::reacts_to<drogon::WebSocketConnectionPtr, std::string, std::string>,
@@ -88,23 +48,19 @@ using ws_connector_actor_int = caf::typed_actor<caf::reacts_to<drogon::WebSocket
                                                 caf::reacts_to<dispatch_atom, jsoncons::ojson>,
                                                 caf::reacts_to<conn_exit_atom>>;
 CAF_ADD_TYPE_ID(okproject, (ws_connector_actor_int))
-/*using ws_connector_v8_actor_int = caf::typed_actor<caf::reacts_to<drogon::WebSocketConnectionPtr, arangodb::ConnectionInfo>,
-                                                   caf::reacts_to<std::string, drogon::WebSocketMessageType>,
-                                                   caf::reacts_to<caf::forward_atom, jsoncons::ojson>,
-                                                   caf::reacts_to<dispatch_atom, jsoncons::ojson>,
-                                                   caf::reacts_to<conn_exit_atom>>;
-CAF_ADD_TYPE_ID(okproject, (ws_connector_v8_actor_int))*/
+
 using main_actor_int = caf::typed_actor<caf::reacts_to<spawn_and_monitor_atom>,
                                         caf::reacts_to<save_old_wsconnptr_atom, drogon::WebSocketConnectionPtr, std::string, std::string>,
                                         caf::reacts_to<pass_to_ws_connection_atom, drogon::WebSocketConnectionPtr, std::string, drogon::WebSocketMessageType>,
                                         caf::reacts_to<conn_exit_old_atom, drogon::WebSocketConnectionPtr>,
-                                        /*caf::reacts_to<save_v8_wsconnptr_atom, drogon::WebSocketConnectionPtr, arangodb::ConnectionInfo>,
-                                        caf::reacts_to<pass_to_ws_v8_connection_atom, drogon::WebSocketConnectionPtr, std::string, drogon::WebSocketMessageType>,
-                                        caf::reacts_to<conn_exit_v8_atom, drogon::WebSocketConnectionPtr>,*/
-                                        // caf::reacts_to< std::shared_ptr<h2o_websocket_conn_t*>, uint8_t, std::string>,
                                         caf::reacts_to<shutdown_atom>>;
 CAF_ADD_TYPE_ID(okproject, (main_actor_int))
 
+using sync_actor_int = caf::typed_actor<caf::reacts_to<create_atom, jsoncons::ojson>,
+                                        caf::reacts_to<set_atom, jsoncons::ojson>,
+                                        caf::reacts_to<remove_atom, jsoncons::ojson>,
+                                        caf::reacts_to<shutdown_atom>>;
+CAF_ADD_TYPE_ID(okproject, (sync_actor_int))
 
 CAF_END_TYPE_ID_BLOCK(okproject)
 #define CONN_EXIT                            \

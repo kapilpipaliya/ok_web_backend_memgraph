@@ -36,21 +36,6 @@ inline void sendMessageToMainActorOld(drogon::WebSocketConnectionPtr const &wsCo
     default: LOG_DEBUG << "Not handled message:" << static_cast<int>(type); break;
   }
 }
-/*inline void sendMessageToMainActorV8(drogon::WebSocketConnectionPtr const &wsConnPtr, std::string &&message, drogon::WebSocketMessageType const &type)
-{
-  switch (type)
-  {
-    case drogon::WebSocketMessageType::Text:
-    case drogon::WebSocketMessageType::Binary:
-    {
-      caf::anon_send(ok::smart_actor::supervisor::mainActor, pass_to_ws_v8_connection_atom_v, wsConnPtr, std::move(message), type);
-      break;
-    }
-    case drogon::WebSocketMessageType::Close: break;
-    case drogon::WebSocketMessageType::Ping:
-    default: LOG_DEBUG << "Not handled message:" << static_cast<int>(type); break;
-  }
-}*/
 inline void sendExitToMainActorOld(drogon::WebSocketConnectionPtr const &wsConnPtr)
 {
   // caf::scoped_actor self{*ok::smart_actor::supervisor::actorSystem};

@@ -6,11 +6,7 @@
 #include <jsoncons/json.hpp>
 #include <magic_enum.hpp>
 #include <utility>
-#include "actor_system/Routes.hpp"
-#include "caf/all.hpp"
-#include "pystring.hpp"
 #include "utils/json_functions.hpp"
-#include "utils/os_functions.hpp"
 namespace ok::smart_actor
 {
 namespace connection
@@ -24,6 +20,7 @@ ws_connector_actor_int::behavior_type WsControllerActor(ws_connector_actor_int::
         LOG_DEBUG << "Monitored Actor(by connection) Error Down Error :";
         LOG_DEBUG << ok::smart_actor::supervisor::getReasonString(msg.reason);
       });
+  self->state.syncActor = self->spawn(ok::smart_actor::supervisor::SyncActor);
   return {
       // Fix can't use this message because cyclic dependency in types in CAF.hpp
       [=](drogon::WebSocketConnectionPtr const &wsConnPtr, std::string const &jwtEncoded, std::string const &firstSubDomain)
@@ -40,14 +37,11 @@ ws_connector_actor_int::behavior_type WsControllerActor(ws_connector_actor_int::
       },
       [=](std::string const &message, drogon::WebSocketMessageType const &type)
       {
-        if (auto [er, result] = ok::smart_actor::connection::processEvent(message, self->state.session, self->state.subDomain, self, false); ok::isEr(er))
+        if (auto [er, result] = ok::smart_actor::connection::processEvent(message, self->state.session, self->state.subDomain, self); ok::isEr(er))
         {
           sendJson(self->state.wsConnPtr, ok::errno_string(er));
         }
-        else if (!result.is_null() && result.is_array() && !result.empty())
-        {
-          sendJson(self->state.wsConnPtr, result);
-        }
+        else if (!result.is_null() && result.is_array() && !result.empty()) { sendJson(self->state.wsConnPtr, result); }
       },
       [=](caf::forward_atom, jsoncons::ojson const &result) { sendJson(self->state.wsConnPtr, result); },
       [=](dispatch_atom, jsoncons::ojson &result_)
@@ -57,17 +51,15 @@ ws_connector_actor_int::behavior_type WsControllerActor(ws_connector_actor_int::
           LOG_FATAL << "this must not happened on " << self->name();
           exit(1);
         }
-        if (auto [er, result] = ok::smart_actor::connection::processEvent(result_, self->state.session, self->state.subDomain, self, true); ok::isEr(er))
+        if (auto [er, result] = ok::smart_actor::connection::processEvent(result_, self->state.session, self->state.subDomain, self); ok::isEr(er))
         {
           sendJson(self->state.wsConnPtr, ok::errno_string(er));
         }
-        else if (!result.is_null() && result.is_array() && !result.empty())
-        {
-          sendJson(self->state.wsConnPtr, result);
-        }
+        else if (!result.is_null() && result.is_array() && !result.empty()) { sendJson(self->state.wsConnPtr, result); }
       },
       [=](conn_exit_atom)
       {
+        self->send(self->state.syncActor, shutdown_atom_v);
         LOG_DEBUG << "exiting " << self->name();
         self->unbecome();
       },
@@ -84,34 +76,29 @@ void sendJson(drogon::WebSocketConnectionPtr wsConnPtr, jsoncons::ojson const &j
   // }
   // else
   // {
-    std::string dump;
-    json.dump(dump);
-    wsConnPtr->send(dump, drogon::WebSocketMessageType::Text);
+  std::string dump;
+  json.dump(dump);
+  wsConnPtr->send(dump, drogon::WebSocketMessageType::Text);
   // }
 }
 void saveNewConnection(ws_connector_actor_int::stateful_pointer<ws_controller_state> self, ws_controller_state &state, std::string const &jwtEncoded, std::string const &firstSubDomain)
 {
   state.subDomain = firstSubDomain;
   // ok::db::authenticateAndSaveSession(jwtEncoded, state.session, state.subDomain);
-
   auto memberMsg = ok::smart_actor::connection::wsMessageBase();
   if (!state.session.memberKey.empty())
   {
     ok::smart_actor::connection::addIsLoggedIn(memberMsg, true);
     ok::smart_actor::connection::addCurrentMember(memberMsg, state.session.database, state.session.memberKey);
   }
-  else
-  {
-    ok::smart_actor::connection::addIsLoggedIn(memberMsg, false);
-  }
+  else { ok::smart_actor::connection::addIsLoggedIn(memberMsg, false); }
   sendJson(state.wsConnPtr, memberMsg);
   // self->send(ok::smart_actor::supervisor::connectedActor, caf::add_atom_v, state.session, self);
 }
 std::tuple<ErrorCode, jsoncons::ojson> processEvent(jsoncons::ojson const &valin,
                                                     Session const &session,
                                                     std::string const &subDomain,
-                                                    ws_connector_actor_int::stateful_pointer<ok::smart_actor::connection::ws_controller_state> currentActor,
-                                                    bool isDispatching)
+                                                    ws_connector_actor_int::stateful_pointer<ok::smart_actor::connection::ws_controller_state> currentActor)
 {
   jsoncons::ojson resultMsg = ok::smart_actor::connection::wsMessageBase();
   if (auto er = impl::checkSchema(valin); ok::isEr(er)) { return {er, resultMsg}; }
@@ -119,17 +106,19 @@ std::tuple<ErrorCode, jsoncons::ojson> processEvent(jsoncons::ojson const &valin
   while (eventNo < valin.size())
   {
     auto e = impl::start(valin, eventNo);
-    if (routeFunctions.contains(e)) routeFunctions[e](valin, eventNo, e, session, resultMsg, currentActor, subDomain, isDispatching);
+    if (routeFunctions.contains(e)) routeFunctions[e](valin, eventNo, e, session, resultMsg, currentActor, subDomain);
     eventNo++;
   }
   return {ok::ErrorCode::ERROR_NO_ERROR, resultMsg};
 }
-std::tuple<ErrorCode, jsoncons::ojson> processEvent(
-    std::string message, Session const &session, std::string const &subDomain, ws_connector_actor_int::stateful_pointer<ws_controller_state> currentActor, bool isDispatching)
+std::tuple<ErrorCode, jsoncons::ojson> processEvent(std::string message,
+                                                    Session const &session,
+                                                    std::string const &subDomain,
+                                                    ws_connector_actor_int::stateful_pointer<ws_controller_state> currentActor)
 {
   auto [er, valin] = impl::preparing(message);
   if (ok::isEr(er)) { return {er, {}}; }
-  return processEvent(valin, session, subDomain, currentActor, isDispatching);
+  return processEvent(valin, session, subDomain, currentActor);
 }
 namespace impl
 {
@@ -157,10 +146,7 @@ ErrorCode checkSchema(jsoncons::ojson const &valin)
       if (!jsoncons::ArrayPosIsArray(a, 0)) { is_schema_ok = false; }
     }
   }
-  else
-  {
-    is_schema_ok = false;
-  }
+  else { is_schema_ok = false; }
   if (!is_schema_ok)
   {
     return ok::ErrorCode::ERROR_BAD_PARAMETER;  // ("Event Json Must be array.");

@@ -2,17 +2,12 @@
 #include <string>
 #include "db/Session.hpp"
 #include "utils/ErrorConstants.hpp"
-
 #include "actor_system/CAF.hpp"
 // #include "SimpleRequestHelper.hpp"
 // #include "SimpleRequest.hpp"
 // #include "Rest/HttpResponse.h"
 // #include "GeneralServer/GeneralServerFeature.h"
 // #include "RestServer/ServerGlobal.hpp"
-#include "utils/json_functions.hpp"
-#include "utils/html_functions.hpp"
-#include "json/json.h"
-#include "pystring.hpp"
 #include <filesystem>
 template <>
 drogon::HttpResponsePtr drogon::toResponse(jsoncons::ojson &&pJson)
@@ -145,7 +140,6 @@ void upload(drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpRe
   //   impl::sendSuccess(savedKeys, callback);
   // }
 }
-
 namespace impl
 {
 ok::smart_actor::connection::Session getSession(drogon::HttpRequestPtr const &req)
@@ -158,7 +152,6 @@ ok::smart_actor::connection::Session getSession(drogon::HttpRequestPtr const &re
 }
 bool initializeUser(ok::smart_actor::connection::Session &session) noexcept { return session.sessionKey.empty() ? false : true; }
 bool isPermissionsOk() noexcept { return true; }
-
 void sendSuccess(std::vector<std::string> const &savedKeys, std::function<void(drogon::HttpResponsePtr const &)> &callback) noexcept
 {
   jsoncons::ojson j;
@@ -177,31 +170,11 @@ void sendFailure(ErrorCode const error, std::function<void(drogon::HttpResponseP
   auto resp = drogon::HttpResponse::newHttpJsonResponse(json);
   callback(resp);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }  // namespace impl
 }  // namespace file
 namespace member
 {
-void confirm(drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpResponsePtr const &)> &&callback, std::string const &key, std::string const &token)
-{
-}
+void confirm(drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpResponsePtr const &)> &&callback, std::string const &key, std::string const &token) {}
 }  // namespace member
 namespace system_
 {

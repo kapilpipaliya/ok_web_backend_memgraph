@@ -84,7 +84,7 @@ MemGraphClientPool::DbConnectionPtr MemGraphClientPool::newConnection()
 {
   DbConnectionPtr connPtr;
   mg::Client::Params params;
-  params.host = "49.12.190.36";
+  params.host = "localhost";
   params.port = 7687;
   params.use_ssl = false;
   auto client = mg::Client::Connect(params);

@@ -31,6 +31,114 @@ void runDrogon()
   ok::api::registerRegexApi();
   drogon::app().run();
 }
+void memGrapToJson(std::vector<std::vector<mg::Value>>& response) {}
+jsoncons::ojson convertNodeToJson(mg::Value const& node)
+{
+  jsoncons::ojson json;
+  auto valueNode = node.ValueNode();
+  json["id"] = valueNode.id().AsInt();
+  auto array = jsoncons::ojson::array();
+  for (auto const& label : valueNode.labels()) { array.push_back(label.data()); }
+  json["labels"] = array;
+  jsoncons::ojson properties;
+  //  json["properties"] = valueNode.properties();
+  for (const auto& [key, value] : valueNode.properties())
+  {
+    switch (value.type())
+    {
+      case mg::Value::Type::Null:
+      {
+        properties[key] = jsoncons::ojson::null();
+        break;
+      }
+      case mg::Value::Type::Bool:
+      {
+        properties[key] = value.ValueBool();
+        break;
+      }
+      case mg::Value::Type::Int:
+      {
+        properties[key] = value.ValueInt();
+        break;
+      }
+      case mg::Value::Type::Double:
+      {
+        properties[key] = value.ValueDouble();
+        break;
+      }
+      case mg::Value::Type::String:
+      {
+        properties[key] = value.ValueString();
+        break;
+      }
+      case mg::Value::Type::List:
+      {
+        //          properties[key] = value.ValueString();
+        break;
+      }
+      case mg::Value::Type::Map:
+      {
+        break;
+      }
+      case mg::Value::Type::Node:
+      {
+        break;
+      }
+      case mg::Value::Type::Relationship:
+      {
+        break;
+      }
+      case mg::Value::Type::UnboundRelationship:
+      {
+        break;
+      }
+      case mg::Value::Type::Path:
+      {
+        break;
+      }
+      case mg::Value::Type::Date:
+      {
+        properties[key] = value.ValueDate();
+        break;
+      }
+      case mg::Value::Type::Time:
+      {
+        properties[key] = value.ValueDateTime();
+        break;
+      }
+      case mg::Value::Type::LocalTime:
+      {
+        properties[key] = value.ValueLocalTime();
+        break;
+      }
+      case mg::Value::Type::DateTime:
+      {
+        properties[key] = value.ValueLocalDateTime();
+      }
+      case mg::Value::Type::DateTimeZoneId:
+      {
+        properties[key] = value.ValueDateTimeZoneId();
+      }
+      case mg::Value::Type::LocalDateTime:
+      {
+        properties[key] = value.ValueLocalDateTime();
+      }
+      case mg::Value::Type::Duration:
+      {
+        properties[key] = value.ValueDuration();
+      }
+      case mg::Value::Type::Point2d:
+      {
+        properties[key] = value.ValuePoint2d();
+      }
+      case mg::Value::Type::Point3d:
+      {
+        properties[key] = value.ValuePoint3d();
+      }
+    }
+  }
+  return json;
+}
 }  // namespace
 int main(int argc, char* argv[])
 {
@@ -39,24 +147,29 @@ int main(int argc, char* argv[])
   // ok::smart_actor::connection::setGlobalVariables();
   ok::db::initializeMemGraphPool(8);
   auto response = ok::db::memgraph_conns.requestDataRaw("", "MATCH (n)-[r]->(m) RETURN n,r,m;");
-  for (auto& d : response)
+  caf::deep_to_string(response);
+  for (auto& row : response)
   {
-    for (auto& e : d)
+    for (auto& matchPart : row)
     {
-      switch (e.type())
+      switch (matchPart.type())
       {
         case mg::Value::Type::Null: LOG_DEBUG << "null"; break;
-        case mg::Value::Type::Bool: LOG_DEBUG << e.ValueBool(); break;
-        case mg::Value::Type::Int: LOG_DEBUG << e.ValueInt(); break;
-        case mg::Value::Type::Double: LOG_DEBUG << e.ValueDouble(); break;
+        case mg::Value::Type::Bool: LOG_DEBUG << matchPart.ValueBool(); break;
+        case mg::Value::Type::Int: LOG_DEBUG << matchPart.ValueInt(); break;
+        case mg::Value::Type::Double: LOG_DEBUG << matchPart.ValueDouble(); break;
         case mg::Value::Type::String:
-          LOG_DEBUG << e.ValueString();
+          LOG_DEBUG << matchPart.ValueString();
           break;
           //        case mg::Value::Type::List: LOG_DEBUG << e.ValueList();
           //        case mg::Value::Type::Map: LOG_DEBUG << ;
+        case mg::Value::Type::List: LOG_DEBUG << "List"; break;
+        case mg::Value::Type::Map: LOG_DEBUG << "Map"; break;
         case mg::Value::Type::Node:
         {
-          const auto node = e.ValueNode();
+          const auto json = convertNodeToJson(matchPart);
+          LOG_DEBUG << json.to_string();
+          const auto node = matchPart.ValueNode();
           LOG_DEBUG << "NODE ID IS: " << node.id().AsInt();
           auto labels = node.labels();
           std::string labels_str = std::accumulate(labels.begin(), labels.end(), std::string(""), [](const std::string& acc, const std::string_view value) { return acc + ":" + std::string(value); });
@@ -83,8 +196,6 @@ int main(int argc, char* argv[])
           std::cout << labels_str << " " << props_str << std::endl;
           break;
         }
-        case mg::Value::Type::List: LOG_DEBUG << "List"; break;
-        case mg::Value::Type::Map: LOG_DEBUG << "Map"; break;
         case mg::Value::Type::Relationship: LOG_DEBUG << "Relationship"; break;
         case mg::Value::Type::UnboundRelationship: LOG_DEBUG << "UnboundRelationship"; break;
         case mg::Value::Type::Path: LOG_DEBUG << "Path"; break;

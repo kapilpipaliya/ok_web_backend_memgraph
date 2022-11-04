@@ -19,12 +19,8 @@ namespace impl
 {
 void spawnAndMonitorSuperActor(MainActorPointer act) noexcept;
 void spanAndSaveConnectionActor(MainActorPointer act, drogon::WebSocketConnectionPtr const &wsConnPtr, std::string const &jwtEncoded, std::string const &firstSubDomain) noexcept;
-// void spanAndSaveV8ConnectionActor(MainActorPointer act, drogon::WebSocketConnectionPtr const &wsConnPtr, arangodb::ConnectionInfo &info) noexcept;
 void passToWsControllerActor(MainActorPointer act, drogon::WebSocketConnectionPtr const &wsConnPtr, std::string &&message, drogon::WebSocketMessageType const &type) noexcept;
-// void passToWsV8ControllerActor(MainActorPointer act, drogon::WebSocketConnectionPtr const &wsConnPtr, std::string &&message, drogon::WebSocketMessageType const &type) noexcept;
 void connectionExit(MainActorPointer act, drogon::WebSocketConnectionPtr const &wsConnPtr);
-// void connectionExitV8(MainActorPointer act, drogon::WebSocketConnectionPtr const &wsConnPtr);
-// void connectionExitNew(MainActorPointer act, drogon::WebSocketConnectionPtr const &wsConnPtr);
 void shutdownNow(MainActorPointer act) noexcept;
 }  // namespace impl
 }  // namespace supervisor

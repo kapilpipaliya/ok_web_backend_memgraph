@@ -3,7 +3,7 @@
 #include <trantor/utils/Logger.h>
 #include <fstream>
 #include <iostream>
-#include <boost/algorithm/string/replace.hpp>
+// #include <boost/algorithm/string/replace.hpp> // Temporary commented because boost is removed from the system and it cant able to install on vcpkg
 #include <regex>
 #include "jwt/jwt.hpp"
 namespace ok::utils
