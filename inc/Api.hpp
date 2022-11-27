@@ -88,10 +88,6 @@ bool isPermissionsOk() noexcept;
 // Fix this
 void sendSuccess(std::vector<std::string> const &savedKeys, std::function<void(drogon::HttpResponsePtr const &)> &callback) noexcept;
 void sendFailure(ErrorCode const error, std::function<void(drogon::HttpResponsePtr const &)> &callback) noexcept;
-std::string getFileName(std::string const &key, ok::smart_actor::connection::Session &session) noexcept;
-std::string makePath(std::string const &fileName, ok::smart_actor::connection::Session &session) noexcept;
-bool saveThumbnails(std::string const &fileName) noexcept;
-std::tuple<ok::ErrorCode, DocumentKey> saveTo(drogon::HttpFile const &file, const std::string_view &fileContent, ok::smart_actor::connection::Session &session) noexcept;
 }  // namespace impl
 }  // namespace file
 namespace member

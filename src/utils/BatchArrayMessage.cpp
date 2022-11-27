@@ -1,7 +1,6 @@
 #include "utils/BatchArrayMessage.hpp"
 #include <trantor/utils/Logger.h>
 #include "utils/html_functions.hpp"
-#include "utils/ErrorConstants.hpp"
 // #include "MutateSchema.hpp"
 #include "drogon/Cookie.h"
 namespace ok::smart_actor
@@ -42,21 +41,19 @@ jsoncons::ojson addSuccess(jsoncons::ojson &array, WsEvent const &event) noexcep
   array.push_back(one);
   return array;
 }
-jsoncons::ojson addFailure(jsoncons::ojson &array, WsEvent const &event, const ok::ErrorCode errorCode) noexcept
+jsoncons::ojson addFailure(jsoncons::ojson &array, WsEvent const &event, std::string const error, std::string const description) noexcept
 {
-  // [e,[0,"desc"]]
   jsoncons::ojson one = jsoncons::ojson::array();
   one.push_back(event);
   jsoncons::ojson r = jsoncons::ojson::object();
-  auto isEr = ok::isEr(errorCode);
-  r["error"] = isEr;
-  if (isEr) r["description"] = ok::errno_string(errorCode);
+  r["error"] = error;
+  r["description"] = description;
   one.push_back(r);
   array.push_back(one);
   return array;
 }
 
-jsoncons::ojson addCurrentMember(jsoncons::ojson &array, Database const &database, DocumentKey const &memberKey) noexcept
+jsoncons::ojson addCurrentMember(jsoncons::ojson &array, VertexId const &memberKey) noexcept
 {
   
   return array;
@@ -151,7 +148,7 @@ jsoncons::ojson addIsLoggedIn(jsoncons::ojson &array, bool v) noexcept
   if (v) { ok::smart_actor::connection::addSuccess(array, loginEvent); }
   else
   {
-    ok::smart_actor::connection::addFailure(array, loginEvent, ok::ErrorCode::ERROR_FORM_EMPTY);
+    ok::smart_actor::connection::addFailure(array, loginEvent, "error", "not logged in");
   }
   return array;
 }

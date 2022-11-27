@@ -12,13 +12,12 @@ enum class GetEventType : uint8_t
 };
 enum class MutateEventType : uint8_t
 {
-  insert=11,
+  create=11,
   update,
   replace,
-  delete_,
+  remove,
   batchUpdate,
-  batchDelete,
-  changePosition
+  batchRemove
 };
 }  // namespace connection
 }  // namespace ok::smart_actor

@@ -7,7 +7,6 @@
 #include "actor_system/CAF.hpp"
 namespace ok
 {
-enum class ErrorCode;
 namespace smart_actor::connection
 {
 struct ws_controller_state
@@ -31,12 +30,12 @@ ws_connector_actor_int::behavior_type WsControllerActor(ws_connector_actor_int::
 void sendJson(drogon::WebSocketConnectionPtr wsConnPtr, const jsoncons::ojson &json) noexcept;
 void saveNewConnection(ws_connector_actor_int::stateful_pointer<ws_controller_state> self, ws_controller_state &state, std::string const &jwtEncoded, std::string const &firstSubDomain);
 // clang-format off
-std::tuple<ErrorCode, jsoncons::ojson> processEvent(jsoncons::ojson const &valin, Session const &session, std::string const &subDomain, ws_connector_actor_int::stateful_pointer<ok::smart_actor::connection::ws_controller_state> currentActor);
-std::tuple<ErrorCode, jsoncons::ojson> processEvent(std::string message, Session const &session, std::string const &subDomain, ws_connector_actor_int::stateful_pointer<ok::smart_actor::connection::ws_controller_state> currentActor);
+std::tuple<bool, jsoncons::ojson> processEvent(jsoncons::ojson const &valin, Session const &session, std::string const &subDomain, ws_connector_actor_int::stateful_pointer<ok::smart_actor::connection::ws_controller_state> currentActor);
+std::tuple<bool, jsoncons::ojson> processEvent(std::string message, Session const &session, std::string const &subDomain, ws_connector_actor_int::stateful_pointer<ok::smart_actor::connection::ws_controller_state> currentActor);
 namespace impl
 {
-std::tuple<ErrorCode, jsoncons::ojson> preparing(std::string message, bool isDispatching = false);
-ErrorCode checkSchema(jsoncons::ojson const &valin);
+std::tuple<bool, jsoncons::ojson> preparing(std::string message, bool isDispatching = false);
+bool checkSchema(jsoncons::ojson const &valin);
 std::string start(jsoncons::ojson const &valin, unsigned int eventNo, bool isDispatching = false);
 // clang-format on
 }  // namespace impl

@@ -1,7 +1,6 @@
 #include "Api.hpp"
 #include <string>
 #include "db/Session.hpp"
-#include "utils/ErrorConstants.hpp"
 #include "actor_system/CAF.hpp"
 // #include "SimpleRequestHelper.hpp"
 // #include "SimpleRequest.hpp"
@@ -65,7 +64,7 @@ void registerApi()
                                         callback(resp);
                                       },
                                       callback);
-                                  if (ok::isEr(er)) { system_::sendError(callback, reason); }
+                                  if (er) { system_::sendError(callback, reason); }
                                 },
                                 {drogon::Get});*/
   drogon::app().registerHandler("/api/upload", &file::upload, {drogon::Post});
@@ -127,7 +126,7 @@ void upload(drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpRe
   // disabling member check, anyone can upload.
   /*if (!impl::initializeUser(session))
   {
-    impl::sendFailure(ok::ErrorCode::ERROR_HTTP_UNAUTHORIZED, callback);
+    impl::sendFailure(ok::bool::ERROR_HTTP_UNAUTHORIZED, callback);
     return;
   }*/
   // if (auto [err, savedKeys] = impl::saveFiles(req, session); ok::isEr(err))
@@ -150,7 +149,7 @@ ok::smart_actor::connection::Session getSession(drogon::HttpRequestPtr const &re
   // ok::db::authenticateAndSaveSession(jwtEncodedCookie, session, subdomain);
   return session;
 }
-bool initializeUser(ok::smart_actor::connection::Session &session) noexcept { return session.sessionKey.empty() ? false : true; }
+bool initializeUser(ok::smart_actor::connection::Session &session) noexcept { return session.memberKey.empty() ? false : true; }
 bool isPermissionsOk() noexcept { return true; }
 void sendSuccess(std::vector<std::string> const &savedKeys, std::function<void(drogon::HttpResponsePtr const &)> &callback) noexcept
 {
@@ -162,7 +161,7 @@ void sendSuccess(std::vector<std::string> const &savedKeys, std::function<void(d
   resp->setContentTypeCode(drogon::CT_APPLICATION_JSON);
   callback(resp);
 }
-void sendFailure(ErrorCode const error, std::function<void(drogon::HttpResponsePtr const &)> &callback) noexcept
+void sendFailure(bool const error, std::function<void(drogon::HttpResponsePtr const &)> &callback) noexcept
 {
   Json::Value json;
   json["error"] = true;

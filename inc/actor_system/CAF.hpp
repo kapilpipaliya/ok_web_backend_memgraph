@@ -8,22 +8,20 @@
 // #include "Endpoint/ConnectionInfo.h"
 //#include "caf/io/middleman.hpp"
 #include "tsl/ordered_map.h"
-#include "utils/ErrorConstants.hpp"
+
 CAF_BEGIN_TYPE_ID_BLOCK(okproject, first_custom_type_id)
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(drogon::WebSocketConnectionPtr)
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(drogon::WebSocketMessageType)
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(jsoncons::ojson)
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(ok::smart_actor::connection::Session)
-CAF_ALLOW_UNSAFE_MESSAGE_TYPE(ok::ErrorCode)
+
 CAF_ADD_ATOM(okproject, conn_exit_old_atom);
-CAF_ADD_ATOM(okproject, conn_exit_v8_atom);
 CAF_ADD_ATOM(okproject, conn_exit_atom);
 CAF_ADD_ATOM(okproject, shutdown_atom);
 CAF_ADD_ATOM(okproject, logout_atom);
 CAF_ADD_ATOM(okproject, send_email_atom);
 CAF_ADD_ATOM(okproject, spawn_and_monitor_atom);
 CAF_ADD_ATOM(okproject, save_old_wsconnptr_atom);
-CAF_ADD_ATOM(okproject, save_new_wsconnptr_atom);
 CAF_ADD_ATOM(okproject, pass_to_ws_connection_atom);
 CAF_ADD_ATOM(okproject, session_clean_atom);
 CAF_ADD_ATOM(okproject, set_context_atom);
@@ -38,7 +36,6 @@ CAF_ADD_TYPE_ID(okproject, (jsoncons::ojson))
 CAF_ADD_TYPE_ID(okproject, (ok::smart_actor::connection::Session))
 CAF_ADD_TYPE_ID(okproject, (std::vector<std::string>))
 CAF_ADD_TYPE_ID(okproject, (std::unordered_set<std::string>))
-CAF_ADD_TYPE_ID(okproject, (ok::ErrorCode))
 
 using ws_connector_actor_int = caf::typed_actor<caf::reacts_to<drogon::WebSocketConnectionPtr, std::string, std::string>,
                                                 caf::replies_to<get_session_atom>::with<ok::smart_actor::connection::Session>,
