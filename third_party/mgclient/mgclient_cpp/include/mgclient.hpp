@@ -133,11 +133,9 @@ class Client {
   /// If the connection couldn't be established given the `params`, it returns
   /// a `nullptr`.
   static std::unique_ptr<Client> Connect(const Params &params);
-
+  mg_session *session_;
  private:
   explicit Client(mg_session *session);
-
-  mg_session *session_;
 };
 
 inline std::unique_ptr<Client> Client::Connect(const Client::Params &params) {

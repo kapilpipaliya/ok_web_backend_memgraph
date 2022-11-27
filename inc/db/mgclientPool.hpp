@@ -17,8 +17,8 @@ public:
   void initialize(size_t const connNum) noexcept;
   size_t readyConnsSize();
   using DbConnectionPtr = std::shared_ptr<mg::Client>;
-  std::vector<std::vector<mg::Value> > requestDataRaw(std::string const &database, std::string const &body); // mg::ConstMap const &params
-
+  std::vector<std::vector<mg::Value> > requestDataRaw(std::string const &body);
+  std::vector<std::vector<mg::Value> > requestDataRaw(std::string const &body,  mg::ConstMap const &params);
 private:
   std::string connectionInfo_;
   size_t connectionsNumber_;

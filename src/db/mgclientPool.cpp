@@ -30,7 +30,7 @@ MemGraphClientPool::~MemGraphClientPool() noexcept
   readyConnections_.clear();
   busyConnections_.clear();
 }
-std::vector<std::vector<mg::Value>> MemGraphClientPool::requestDataRaw(std::string const &database, std::string const &body)  //, mg::ConstMap const &params
+std::vector<std::vector<mg::Value>> MemGraphClientPool::requestDataRaw(std::string const &body)  //, mg::ConstMap const &params
 {
   DbConnectionPtr conn;
   {
@@ -79,6 +79,56 @@ std::vector<std::vector<mg::Value>> MemGraphClientPool::requestDataRaw(std::stri
   }
   LOG_FATAL << "This Should Not happened.";  // Todo fix this
   return {};
+}
+std::vector<std::vector<mg::Value> >  MemGraphClientPool::requestDataRaw(std::string const &body,  mg::ConstMap const &params){
+    DbConnectionPtr conn;
+    {
+      std::lock_guard<std::mutex> guard(connectionsMutex_);
+      if (readyConnections_.empty())
+      {
+        if (busyConnections_.empty())
+        {
+          // throw std::runtime_error("No connection to database server");
+          LOG_FATAL << "No connection to database server";
+          exit(1);
+          // return;
+        }
+        // LOG_TRACE << "Push query to buffer";
+        // I think this should not happen.
+        LOG_FATAL << "no ready connections. Please Increase ready connections pool";
+      }
+      else
+      {
+        // move ready connection -> busy connection
+        auto iter = std::begin(readyConnections_);
+        busyConnections_.insert(*iter);
+        conn = *iter;
+        readyConnections_.erase(iter);
+      }
+    }
+    if (conn)
+    {
+      //    conn->setDatabaseName(database);
+      if (!conn->Execute(body, params))
+      {
+
+        std::cerr << "Failed to execute query!" << mg_session_error(conn->session_) << std::endl;
+        //        return 1;
+      }
+      std::vector<std::vector<mg::Value>> resp;
+      while (const auto maybeResult = conn->FetchOne()) { resp.emplace_back(std::move(*maybeResult)); }
+      std::lock_guard<std::mutex> guard(connectionsMutex_);
+      busyConnections_.erase(conn);
+      readyConnections_.insert(conn);
+      return resp;
+    }
+    else
+    {
+      std::cerr << "Failed to connect!\n";
+      //        return 1;
+    }
+    LOG_FATAL << "This Should Not happened.";  // Todo fix this
+    return {};
 }
 MemGraphClientPool::DbConnectionPtr MemGraphClientPool::newConnection()
 {

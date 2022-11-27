@@ -42,20 +42,6 @@ inline void sendExitToMainActorOld(drogon::WebSocketConnectionPtr const &wsConnP
   caf::anon_send(ok::smart_actor::supervisor::mainActor, conn_exit_old_atom_v, wsConnPtr);
 }
 }  // namespace ws
-inline std::string getOrSendBrowserId(drogon::HttpRequestPtr const &req, drogon::WebSocketConnectionPtr const &wsConnPtr)
-{
-  auto browserCookie = req->getCookie("browserId");
-  if (browserCookie.empty())
-  {
-    auto uuid = drogon::utils::getUuid();
-    auto response = ok::smart_actor::connection::wsMessageBase();
-    ok::smart_actor::connection::addSimpleCookie(response, {{"browserId", uuid}}, 60 * 24 * 24);
-    ok::smart_actor::connection::sendJson(wsConnPtr, response);
-    return uuid;
-  }
-  else
-    return browserCookie;
-}
 class Ws : public drogon::WebSocketController<Ws>
 {
 public:

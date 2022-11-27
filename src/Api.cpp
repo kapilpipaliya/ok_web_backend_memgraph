@@ -8,6 +8,9 @@
 // #include "GeneralServer/GeneralServerFeature.h"
 // #include "RestServer/ServerGlobal.hpp"
 #include <filesystem>
+#include "db/mgclientPool.hpp"
+#include "jwt/jwt.hpp"
+#include "third_party/mgclient/src/mgvalue.h"
 template <>
 drogon::HttpResponsePtr drogon::toResponse(jsoncons::ojson &&pJson)
 {
@@ -20,6 +23,14 @@ namespace ok::api
 {
 using drogon::HttpRequestPtr;
 using drogon::HttpResponsePtr;
+bool findByEmail(std::string const &email) {
+    mg_map *extra = mg_map_make_empty(1);
+    if (!extra)
+      return false;
+    mg_map_insert_unsafe(extra, "email", mg_value_make_string(email.c_str()));
+    auto response = ok::db::memgraph_conns.requestDataRaw("MATCH (u:User {email: $email}) RETURN u", mg::ConstMap{extra});
+    return response.size() > 0;
+}
 std::string HttpMethodToString(drogon::HttpMethod method)
 {
   switch (method)
@@ -36,6 +47,7 @@ std::string HttpMethodToString(drogon::HttpMethod method)
 }
 void registerApi()
 {
+    drogon::app().registerHandler("/api/upload", &file::upload, {drogon::Post});
   /*drogon::app().registerHandler("/api/chat/drogon",
                                 [](drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpResponsePtr const &)> &&callback)
                                 {
@@ -67,7 +79,133 @@ void registerApi()
                                   if (er) { system_::sendError(callback, reason); }
                                 },
                                 {drogon::Get});*/
-  drogon::app().registerHandler("/api/upload", &file::upload, {drogon::Post});
+    // `CREATE CONSTRAINT ON (u:User) ASSERT u.email IS UNIQUE`)
+    drogon::app().registerHandler("/register", [](drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpResponsePtr const &)> &&callback){
+        auto o = jsoncons::ojson::parse(req->body());
+        auto email = o["body"]["email"].as_string();
+        auto password = o["body"]["password"].as_string();
+        if(findByEmail(email)) {
+            Json::Value ret;
+            ret["message"] = "Email Adress already exist";
+            auto resp = drogon::HttpResponse::newHttpJsonResponse(ret);
+            callback(resp);
+        } else {
+            mg_map *extra = mg_map_make_empty(2);
+            if (!extra) {
+              return nullptr;
+            }
+            mg_map_insert_unsafe(extra, "email", mg_value_make_string(email.c_str()));
+            mg_map_insert_unsafe(extra, "password", mg_value_make_string(password.c_str()));
+            mg::ConstMap params{extra};
+            auto response = ok::db::memgraph_conns.requestDataRaw("CREATE (c:User {email: $email, password: $password}) return c;", params);
+            mg_map_destroy(extra);
+             /*jsoncons::json_options options;
+             options.object_array_line_splits(jsoncons::line_split_kind::new_line);
+    //         options.
+             // taken encoder example from o.to_string();
+             using string_type = std::basic_string<jsoncons::ojson::char_type>;
+             string_type s;
+             jsoncons::basic_compact_json_encoder<jsoncons::ojson::char_type, jsoncons::string_sink<string_type>> encoder(s);
+             o.dump(s, options);
+             std::cout << s << std::endl;*/
+            int userId = 0;
+            for (auto& row : response)
+            {
+              for (auto& matchPart : row)
+              {
+                  if(matchPart.type() == mg::Value::Type::Node) {
+                      userId = matchPart.ValueNode().id().AsInt();
+                  }
+              }
+            }
+            Json::Value ret;
+            ret["message"] = "Hello !" + email + password + std::to_string(userId);
+            auto resp = drogon::HttpResponse::newHttpJsonResponse(ret);
+            std::map<std::string, std::string> jwtMap{{"memberKey", std::to_string(userId)}};
+            resp->addCookie("jwt", ok::utils::jwt_functions::encodeCookie(jwtMap));
+            callback(resp);
+        }
+    }, {drogon::Post});
+    drogon::app().registerHandler("/login", [](drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpResponsePtr const &)> &&callback){
+        auto o = jsoncons::ojson::parse(req->body());
+        auto email = o["body"]["email"].as_string();
+        auto password = o["body"]["password"].as_string();
+
+        mg_map *extra = mg_map_make_empty(2);
+        if (!extra) {
+            LOG_DEBUG << "unexpected error";
+        }
+        mg_map_insert_unsafe(extra, "email", mg_value_make_string(email.c_str()));
+        mg_map_insert_unsafe(extra, "password", mg_value_make_string(password.c_str()));
+        mg::ConstMap params{extra};
+        auto response = ok::db::memgraph_conns.requestDataRaw("MATCH (u:User {email: $email, password: $password}) return u;", params);
+        mg_map_destroy(extra);
+        int userId = 0;
+        for (auto& row : response)
+        {
+          for (auto& matchPart : row)
+          {
+              if(matchPart.type() == mg::Value::Type::Node) {
+                  userId = matchPart.ValueNode().id().AsInt();
+              }
+          }
+        }
+        if(userId != 0) {
+            Json::Value ret;
+            ret["message"] = "Successful Login";
+            auto resp = drogon::HttpResponse::newHttpJsonResponse(ret);
+            std::map<std::string, std::string> jwtMap{{"memberKey", std::to_string(userId)}};
+            resp->addCookie("jwt", ok::utils::jwt_functions::encodeCookie(jwtMap));
+            callback(resp);
+        } else {
+            Json::Value ret;
+            ret["message"] = "Email or Password Invalid";
+            auto resp = drogon::HttpResponse::newHttpJsonResponse(ret);
+            resp->addCookie("jwt", {});
+            callback(resp);
+        }
+    }, {drogon::Post});
+
+    drogon::app().registerHandler("/user", [](drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpResponsePtr const &)> &&callback){
+
+        auto jwtEncodedCookie = req->getCookie("jwt");
+
+        if (jwtEncodedCookie.empty())
+        {
+            Json::Value ret;
+            ret["message"] = "Not Logged In";
+            auto resp = drogon::HttpResponse::newHttpJsonResponse(ret);
+            callback(resp);
+        } else {
+            std::string memberKey;
+              auto dec_obj = ok::utils::jwt_functions::decodeCookie(jwtEncodedCookie);
+              if (dec_obj.payload().has_claim("memberKey")) { memberKey = dec_obj.payload().get_claim_value<std::string>("memberKey"); }
+              if (memberKey.empty())
+               {
+                  Json::Value ret;
+                  ret["message"] = "Not Logged In";
+                  auto resp = drogon::HttpResponse::newHttpJsonResponse(ret);
+                  callback(resp);
+              } else {
+                  // Todo find if the user exists in database
+                  Json::Value ret;
+                  ret["message"] = memberKey;
+                  auto resp = drogon::HttpResponse::newHttpJsonResponse(ret);
+                  callback(resp);
+              }
+
+        }
+
+    }, {drogon::Get});
+
+    drogon::app().registerHandler("/logout", [](drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpResponsePtr const &)> &&callback){
+        Json::Value ret;
+        ret["message"] = "Success";
+        auto resp = drogon::HttpResponse::newHttpJsonResponse(ret);
+        resp->addCookie("jwt", {});
+        callback(resp);
+
+    }, {drogon::Get});
   drogon::app().registerHandler("/",
                                 [](drogon::HttpRequestPtr const &, std::function<void(drogon::HttpResponsePtr const &)> &&cb)
                                 {
