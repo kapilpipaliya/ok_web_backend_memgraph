@@ -17,6 +17,7 @@ struct Session;
 namespace api
 {
 void registerApi();
+void registerAuthApi();
 void registerRegexApi();
 namespace ws
 {

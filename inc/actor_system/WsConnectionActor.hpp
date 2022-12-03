@@ -18,10 +18,9 @@ struct ws_controller_state
   sync_actor_int syncActor;
 };
 inline std::map<std::string,
-                std::function<void(jsoncons::ojson const &valin,
-                                   unsigned int eventNo,
-                                   std::string const &routeNo,
-                                   Session const &session,
+                std::function<void(jsoncons::ojson const &event,
+                                   jsoncons::ojson const &args,
+                                   Session &session,
                                    jsoncons::ojson &resultMsg,
                                    ws_connector_actor_int::stateful_pointer<ok::smart_actor::connection::ws_controller_state> currentActor,
                                    std::string const &subDomain)>>
@@ -30,13 +29,11 @@ ws_connector_actor_int::behavior_type WsControllerActor(ws_connector_actor_int::
 void sendJson(drogon::WebSocketConnectionPtr wsConnPtr, const jsoncons::ojson &json) noexcept;
 void saveNewConnection(ws_connector_actor_int::stateful_pointer<ws_controller_state> self, ws_controller_state &state, std::string const &jwtEncoded, std::string const &firstSubDomain);
 // clang-format off
-std::tuple<bool, jsoncons::ojson> processEvent(jsoncons::ojson const &valin, Session const &session, std::string const &subDomain, ws_connector_actor_int::stateful_pointer<ok::smart_actor::connection::ws_controller_state> currentActor);
-std::tuple<bool, jsoncons::ojson> processEvent(std::string message, Session const &session, std::string const &subDomain, ws_connector_actor_int::stateful_pointer<ok::smart_actor::connection::ws_controller_state> currentActor);
+std::tuple<bool, jsoncons::ojson> processEvent(jsoncons::ojson const &valin, Session &session, std::string const &subDomain, ws_connector_actor_int::stateful_pointer<ok::smart_actor::connection::ws_controller_state> currentActor);
 namespace impl
 {
-std::tuple<bool, jsoncons::ojson> preparing(std::string message, bool isDispatching = false);
+std::tuple<bool, jsoncons::ojson> parseJson(std::string message);
 bool checkSchema(jsoncons::ojson const &valin);
-std::string start(jsoncons::ojson const &valin, unsigned int eventNo, bool isDispatching = false);
 // clang-format on
 }  // namespace impl
 }  // namespace smart_actor::connection
