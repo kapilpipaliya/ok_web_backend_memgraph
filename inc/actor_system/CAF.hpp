@@ -2,7 +2,6 @@
 #include "caf/all.hpp"
 #include <drogon/WebSocketController.h>
 #include <jsoncons/json.hpp>
-#include "actor_system/Routes.hpp"
 #include "db/Session.hpp"
 
 // #include "Endpoint/ConnectionInfo.h"
@@ -35,6 +34,7 @@ CAF_ADD_TYPE_ID(okproject, (drogon::WebSocketMessageType))
 CAF_ADD_TYPE_ID(okproject, (jsoncons::ojson))
 CAF_ADD_TYPE_ID(okproject, (ok::smart_actor::connection::Session))
 CAF_ADD_TYPE_ID(okproject, (std::vector<std::string>))
+CAF_ADD_TYPE_ID(okproject, (std::vector<VertexId>))
 CAF_ADD_TYPE_ID(okproject, (std::unordered_set<std::string>))
 
 using ws_connector_actor_int = caf::typed_actor<caf::reacts_to<drogon::WebSocketConnectionPtr, std::string, std::string>,
@@ -53,11 +53,19 @@ using main_actor_int = caf::typed_actor<caf::reacts_to<spawn_and_monitor_atom>,
                                         caf::reacts_to<shutdown_atom>>;
 CAF_ADD_TYPE_ID(okproject, (main_actor_int))
 
-using sync_actor_int = caf::typed_actor<caf::reacts_to<create_atom, jsoncons::ojson>,
-                                        caf::reacts_to<set_atom, jsoncons::ojson>,
-                                        caf::reacts_to<remove_atom, jsoncons::ojson>,
+using sync_actor_int = caf::typed_actor<
+    caf::reacts_to<caf::subscribe_atom, WsEvent, WsArguments, VertexId, ws_connector_actor_int>,
+    caf::reacts_to<create_atom, std::vector<VertexId>, std::vector<EdgeId>>,
+                                        caf::reacts_to<set_atom, std::vector<VertexId>, std::vector<EdgeId>>,
+                                        caf::reacts_to<remove_atom, std::vector<VertexId>, std::vector<EdgeId>>,
+                                        caf::reacts_to<conn_exit_atom, ws_connector_actor_int>,
                                         caf::reacts_to<shutdown_atom>>;
 CAF_ADD_TYPE_ID(okproject, (sync_actor_int))
+
+using mutation_actor_int = caf::typed_actor<
+    caf::reacts_to<create_atom, VertexId, WsArguments, ws_connector_actor_int>,
+    caf::reacts_to<shutdown_atom>>;
+CAF_ADD_TYPE_ID(okproject, (mutation_actor_int))
 
 CAF_END_TYPE_ID_BLOCK(okproject)
 #define CONN_EXIT                            \
@@ -73,6 +81,7 @@ namespace supervisor
 inline std::unique_ptr<caf::actor_system_config> cfg;
 inline std::unique_ptr<caf::actor_system> actorSystem;
 inline main_actor_int mainActor;
+inline sync_actor_int syncActor;
 void initialiseMainActor() noexcept;
 std::string getReasonString(caf::error &err) noexcept;
 using exception_handler = std::function<caf::error(caf::scheduled_actor *, std::exception_ptr &)>;

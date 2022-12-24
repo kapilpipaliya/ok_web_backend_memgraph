@@ -15,7 +15,7 @@ struct ws_controller_state
   drogon::WebSocketConnectionPtr wsConnPtr = nullptr;
   std::string subDomain;
   ok::smart_actor::connection::Session session;
-  sync_actor_int syncActor;
+  mutation_actor_int mutationActor;
 };
 inline std::map<std::string,
                 std::function<void(jsoncons::ojson const &event,

@@ -85,17 +85,17 @@ else ()
     message(STATUS "use c++20")
 endif ()
 
-aux_source_directory(controllers CTL_SRC)
-aux_source_directory(filters FILTER_SRC)
-aux_source_directory(plugins PLUGIN_SRC)
-aux_source_directory(models MODEL_SRC)
-aux_source_directory(src/actor_system CAF_SRC)
-aux_source_directory(src/db DB_SRC)
-aux_source_directory(src/utils UTILS_SRC)
-aux_source_directory(src MAIN_SRC)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/controllers CTL_SRC)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/filters FILTER_SRC)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/plugins PLUGIN_SRC)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/models MODEL_SRC)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/actor_system CAF_SRC)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/db DB_SRC)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/utils UTILS_SRC)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src MAIN_SRC)
 
-aux_source_directory(third_party/pystring UTILS_SRC)
-include_directories(third_party/pystring)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/pystring UTILS_SRC)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/pystring)
 
 
 drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views
@@ -109,7 +109,6 @@ target_include_directories(${PROJECT_NAME}
                                    ${CMAKE_CURRENT_SOURCE_DIR}/models)
 target_sources(${PROJECT_NAME}
                PRIVATE
-               ${SRC_DIR}
                ${CTL_SRC}
                ${FILTER_SRC}
                ${PLUGIN_SRC}

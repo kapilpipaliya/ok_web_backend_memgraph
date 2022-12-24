@@ -6,12 +6,10 @@
 #include <jsoncons/json.hpp>
 #include <magic_enum.hpp>
 #include <utility>
-#include "actor_system/Routes.hpp"
 #include "caf/all.hpp"
 #include "pystring.hpp"
 #include "utils/json_functions.hpp"
 #include "utils/time_functions.hpp"
-#include "utils/os_functions.hpp"
 namespace ok::smart_actor
 {
 namespace connection
@@ -136,44 +134,32 @@ void addAuthRoutes()
 }
 void addSyncRoutes()
 {
-    routeFunctions["syncVertex"] = [](RouteArgs) {
-
-    };
-    routeFunctions["syncEdge"] = [](RouteArgs) {
-
+    routeFunctions["sync"] = [](RouteArgs) {
+        currentActor->send(ok::smart_actor::supervisor::syncActor,
+                           caf::subscribe_atom_v,
+                           event,
+                           args,
+                           session.memberKey,
+                           currentActor);
     };
 }
 void addMutateRoutes()
 {
-    routeFunctions["create"] = [](RouteArgs) {
-        // get mgclient from the pool
-        // run query
-        if (jsoncons::ArrayPosIsString(args, 0))
-        {
-        }
-    };
-    routeFunctions["set"] = [](RouteArgs) {
-        // get mgclient from the pool
-        // run query
-        if (jsoncons::ArrayPosIsString(args, 0))
-        {
-        }
-    };
-    routeFunctions["remove"] = [](RouteArgs) {
-        // get mgclient from the pool
-        // run query
-        if (jsoncons::ArrayPosIsString(args, 0))
-        {
-        }
-    };
-    //
-    routeFunctions["get_member_setting"] = [](RouteArgs) {
-        if (jsoncons::ArrayPosIsString(args, 0))
-        {
-        }
-    };
-    routeFunctions["member_setting_mutate"] = [](RouteArgs) {
-
+    routeFunctions["mutate"] = [](RouteArgs) {
+        currentActor->send(currentActor->state.mutationActor,
+                           create_atom_v,
+                           session.memberKey,
+                           args,
+                           currentActor);
+        jsoncons::ojson result;
+        std::vector<int> txnIds;
+        if (args.is_array())
+            for (auto const &txn : args.array_range())
+                if (txn.is_array())
+                    txnIds.push_back(txn[0].as<int>());
+        result["txnIds"] = txnIds;
+        result["ack"] = true;
+        ok::smart_actor::connection::addEventAndJson(resultMsg, event, result);
     };
 }
 void addHelperRoutes()

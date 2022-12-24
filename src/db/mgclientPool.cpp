@@ -16,7 +16,7 @@ void MemGraphClientPool::initialize(size_t const connNum) noexcept
         for (size_t i = 0; i < connectionsNumber_; ++i)
         {
             // can do on separate threads
-            connections_.insert(newConnection());
+            newConnection();
         }
     }
 }
@@ -27,50 +27,68 @@ size_t MemGraphClientPool::readyConnsSize()
 MemGraphClientPool::~MemGraphClientPool() noexcept
 {
     std::lock_guard<std::mutex> lock(connectionsMutex_);
-    for (auto const &conn : connections_)
-    {
-        // Deallocate the client because mg_finalize has to be called globally.
-        //    conn->reset(nullptr); // giving error
-    }
-    connections_.clear();
+    //    for (auto const &conn : connections_)
+    //    {
+    // Deallocate the client because mg_finalize has to be called globally.
+    //    conn->reset(nullptr); // giving error
+    //    }
+
     readyConnections_.clear();
     busyConnections_.clear();
+}
+MemGraphClientPool::DbConnectionPtr MemGraphClientPool::getDBConnection()
+{
+    DbConnectionPtr conn;
+    std::lock_guard<std::mutex> guard(connectionsMutex_);
+    if (readyConnections_.empty())
+    {
+        if (busyConnections_.empty())
+        {
+            // throw std::runtime_error("No connection to database server");
+            LOG_FATAL << "No connection to database server";
+            exit(1);
+            // return;
+        }
+        // LOG_TRACE << "Push query to buffer";
+        // I think this should not happen.
+        LOG_FATAL << "no ready connections. Please Increase ready "
+                     "connections pool";
+    }
+    else
+    {
+        // move ready connection -> busy connection
+        auto iter = std::begin(readyConnections_);
+        busyConnections_.insert(*iter);
+        conn = *iter;
+        readyConnections_.erase(iter);
+    }
+    return conn;
+}
+
+void MemGraphClientPool::freeDBConnection(DbConnectionPtr conn)
+{
+    std::lock_guard<std::mutex> guard(connectionsMutex_);
+    busyConnections_.erase(conn);
+    readyConnections_.insert(conn);
+}
+void MemGraphClientPool::deleteBadDBConnection(DbConnectionPtr conn)
+{
+    std::lock_guard<std::mutex> guard(connectionsMutex_);
+    busyConnections_.erase(conn);
+    readyConnections_.erase(conn);
+    newConnection();
 }
 std::vector<std::vector<mg::Value>> MemGraphClientPool::request(
     std::string const &body)  //, mg::ConstMap const &params
 {
-    DbConnectionPtr conn;
-    {
-        std::lock_guard<std::mutex> guard(connectionsMutex_);
-        if (readyConnections_.empty())
-        {
-            if (busyConnections_.empty())
-            {
-                // throw std::runtime_error("No connection to database server");
-                LOG_FATAL << "No connection to database server";
-                exit(1);
-                // return;
-            }
-            // LOG_TRACE << "Push query to buffer";
-            // I think this should not happen.
-            LOG_FATAL << "no ready connections. Please Increase ready "
-                         "connections pool";
-        }
-        else
-        {
-            // move ready connection -> busy connection
-            auto iter = std::begin(readyConnections_);
-            busyConnections_.insert(*iter);
-            conn = *iter;
-            readyConnections_.erase(iter);
-        }
-    }
+    auto conn = getDBConnection();
     if (conn)
     {
         //    conn->setDatabaseName(database);
         if (!conn->Execute(body))
         {
-            std::cerr << "Failed to execute query!";
+            std::cerr << "Failed to execute query!" << body << " "
+                      << mg_session_error(conn->session_) << std::endl;
             //        return 1;
         }
         std::vector<std::vector<mg::Value>> resp;
@@ -78,9 +96,7 @@ std::vector<std::vector<mg::Value>> MemGraphClientPool::request(
         {
             resp.emplace_back(std::move(*maybeResult));
         }
-        std::lock_guard<std::mutex> guard(connectionsMutex_);
-        busyConnections_.erase(conn);
-        readyConnections_.insert(conn);
+        freeDBConnection(conn);
         return resp;
     }
     else
@@ -95,38 +111,13 @@ std::vector<std::vector<mg::Value>> MemGraphClientPool::request(
     std::string const &body,
     mg::ConstMap const &params)
 {
-    DbConnectionPtr conn;
-    {
-        std::lock_guard<std::mutex> guard(connectionsMutex_);
-        if (readyConnections_.empty())
-        {
-            if (busyConnections_.empty())
-            {
-                // throw std::runtime_error("No connection to database server");
-                LOG_FATAL << "No connection to database server";
-                exit(1);
-                // return;
-            }
-            // LOG_TRACE << "Push query to buffer";
-            // I think this should not happen.
-            LOG_FATAL << "no ready connections. Please Increase ready "
-                         "connections pool";
-        }
-        else
-        {
-            // move ready connection -> busy connection
-            auto iter = std::begin(readyConnections_);
-            busyConnections_.insert(*iter);
-            conn = *iter;
-            readyConnections_.erase(iter);
-        }
-    }
+    auto conn = getDBConnection();
     if (conn)
     {
         //    conn->setDatabaseName(database);
         if (!conn->Execute(body, params))
         {
-            std::cerr << "Failed to execute query!"
+            std::cerr << "Failed to execute query!" << body << " "
                       << mg_session_error(conn->session_) << std::endl;
             //        return 1;
         }
@@ -135,9 +126,7 @@ std::vector<std::vector<mg::Value>> MemGraphClientPool::request(
         {
             resp.emplace_back(std::move(*maybeResult));
         }
-        std::lock_guard<std::mutex> guard(connectionsMutex_);
-        busyConnections_.erase(conn);
-        readyConnections_.insert(conn);
+        freeDBConnection(conn);
         return resp;
     }
     else
@@ -148,6 +137,7 @@ std::vector<std::vector<mg::Value>> MemGraphClientPool::request(
     LOG_FATAL << "This Should Not happened.";  // Todo fix this
     return {};
 }
+
 int MemGraphClientPool::getIdFromResponse(
     std::vector<std::vector<mg::Value>> const &response)
 {
@@ -159,6 +149,22 @@ int MemGraphClientPool::getIdFromResponse(
             if (matchPart.type() == mg::Value::Type::Node)
             {
                 userId = matchPart.ValueNode().id().AsInt();
+            }
+        }
+    }
+    return userId;
+}
+int MemGraphClientPool::getIdFromRelationshipResponse(
+    std::vector<std::vector<mg::Value>> const &response)
+{
+    int userId = 0;
+    for (auto &row : response)
+    {
+        for (auto &matchPart : row)
+        {
+            if (matchPart.type() == mg::Value::Type::Relationship)
+            {
+                userId = matchPart.ValueRelationship().id().AsInt();
             }
         }
     }

@@ -1,4 +1,5 @@
 #include "actor_system/WsConnectionActor.hpp"
+#include "actor_system/MutationActor.hpp"
 #include "db/Session.hpp"
 #include "utils/BatchArrayMessage.hpp"
 #include <jsoncons_ext/msgpack/msgpack.hpp>
@@ -21,7 +22,8 @@ ws_connector_actor_int::behavior_type WsControllerActor(
         LOG_DEBUG << "Monitored Actor(by connection) Error Down Error :";
         LOG_DEBUG << ok::smart_actor::supervisor::getReasonString(msg.reason);
     });
-    self->state.syncActor = self->spawn(ok::smart_actor::supervisor::SyncActor);
+    self->state.mutationActor =
+        self->spawn(ok::smart_actor::supervisor::MutationActor);
     return {
         // Fix can't use this message because cyclic dependency in types in
         // CAF.hpp
@@ -68,7 +70,7 @@ ws_connector_actor_int::behavior_type WsControllerActor(
                 sendJson(self->state.wsConnPtr, result);
         },
         [=](conn_exit_atom) {
-            self->send(self->state.syncActor, shutdown_atom_v);
+            self->send(self->state.mutationActor, shutdown_atom_v);
             LOG_DEBUG << "exiting " << self->name();
             self->unbecome();
         },
@@ -77,6 +79,7 @@ ws_connector_actor_int::behavior_type WsControllerActor(
 void sendJson(drogon::WebSocketConnectionPtr wsConnPtr,
               jsoncons::ojson const &json) noexcept
 {
+    // LOG_DEBUG << json.to_string();
     // if (ok::smart_actor::connection::getServerVal("msgpack"))
     // {
     //   //
@@ -90,6 +93,7 @@ void sendJson(drogon::WebSocketConnectionPtr wsConnPtr,
     // {
     std::string dump;
     json.dump(dump);
+
     wsConnPtr->send(dump, drogon::WebSocketMessageType::Text);
     // }
 }
@@ -143,7 +147,7 @@ std::tuple<bool, jsoncons::ojson> processEvent(
     {
         auto &event = valin[eventNo][0];
         auto args = [&]() {
-            if (jsoncons::ArrayPosIsObject(valin[eventNo], 1))
+            if (valin[eventNo].size() > 1)
                 return valin[eventNo][1];
             else
                 return jsoncons::ojson{};

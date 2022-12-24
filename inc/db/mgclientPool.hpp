@@ -42,15 +42,19 @@ public:
   using DbConnectionPtr = std::shared_ptr<mg::Client>;
   std::vector<std::vector<mg::Value> > request(std::string const &body);
   std::vector<std::vector<mg::Value> > request(std::string const &body,  mg::ConstMap const &params);
+  DbConnectionPtr getDBConnection();
+  void freeDBConnection(DbConnectionPtr conn);
+  void deleteBadDBConnection(DbConnectionPtr conn);
   int getIdFromResponse(std::vector<std::vector<mg::Value> > const &response);
+  int getIdFromRelationshipResponse(std::vector<std::vector<mg::Value> > const &response);
+  DbConnectionPtr newConnection();
 private:
   std::string connectionInfo_;
   size_t connectionsNumber_;
   std::mutex connectionsMutex_;
-  std::unordered_set<DbConnectionPtr> connections_;
   std::unordered_set<DbConnectionPtr> readyConnections_;
   std::unordered_set<DbConnectionPtr> busyConnections_;
-  DbConnectionPtr newConnection();
+
 };
 inline MemGraphClientPool memgraph_conns{};
 void initializeMemGraphPool(int count);
