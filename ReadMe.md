@@ -23,3 +23,11 @@ https://www.npmjs.com/package/lazy-space
 https://www.npmjs.com/package/tsbase
 https://www.npmjs.com/package/@ts-std/collections
 https://www.npmjs.com/package/@mirei/ts-collections
+
+
+// mg_client dont support threads:
+//            https://github.com/memgraph/mgclient/issues/1
+
+// convert json to cypher map
+// https://memgraph.com/docs/cypher-manual/clauses/set#7-replace-all-properties-using-map
+                        

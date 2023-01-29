@@ -22,8 +22,10 @@ ws_connector_actor_int::behavior_type WsControllerActor(
         LOG_DEBUG << "Monitored Actor(by connection) Error Down Error :";
         LOG_DEBUG << ok::smart_actor::supervisor::getReasonString(msg.reason);
     });
-    self->state.mutationActor =
-        self->spawn(ok::smart_actor::supervisor::MutationActor);
+    // MutationActor will use IO
+    // and should thus be spawned in a separate thread
+    self->state.mutationActor = self->spawn<caf::detached + caf::linked>(
+        ok::smart_actor::supervisor::MutationActor);
     return {
         // Fix can't use this message because cyclic dependency in types in
         // CAF.hpp
@@ -71,7 +73,7 @@ ws_connector_actor_int::behavior_type WsControllerActor(
         },
         [=](conn_exit_atom) {
             self->send(self->state.mutationActor, shutdown_atom_v);
-            LOG_DEBUG << "exiting " << self->name();
+            //            LOG_DEBUG << "exiting " << self->name();
             self->unbecome();
         },
     };
@@ -117,7 +119,7 @@ void saveNewConnection(
             state.session.memberKey = member["id"].as<int>();
         else
             state.session.memberKey = 0;
-        if (!state.session.memberKey)
+        if (state.session.memberKey)
         {
             ok::smart_actor::connection::addIsLoggedIn(memberMsg, true);
             ok::smart_actor::connection::addCurrentMember(

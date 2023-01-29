@@ -14,3 +14,6 @@ using WsArguments = jsoncons::ojson;
 using ErrorMsg = std::string;
 
 
+namespace global_var {
+    inline int mg_port = 0;
+}

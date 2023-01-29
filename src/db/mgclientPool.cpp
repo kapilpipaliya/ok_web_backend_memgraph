@@ -1,6 +1,7 @@
 #include "db/mgclientPool.hpp"
 #include <trantor/utils/Logger.h>
 #include <thread>
+#include "alias.hpp"
 namespace ok::db
 {
 MemGraphClientPool::MemGraphClientPool()
@@ -175,7 +176,7 @@ MemGraphClientPool::DbConnectionPtr MemGraphClientPool::newConnection()
     DbConnectionPtr connPtr;
     mg::Client::Params params;
     params.host = "localhost";
-    params.port = 7687;
+    params.port = global_var::mg_port;
     params.use_ssl = false;
     auto client = mg::Client::Connect(params);
     connPtr = std::move(client);

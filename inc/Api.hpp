@@ -48,7 +48,7 @@ class Ws : public drogon::WebSocketController<Ws>
 public:
   inline void handleNewConnection(drogon::HttpRequestPtr const &req, drogon::WebSocketConnectionPtr const &wsConnPtr) override
   {
-    LOG_DEBUG << req->getHeader("host") << " " << req->getLocalAddr().toIp();
+//    LOG_DEBUG << req->getHeader("host") << " " << req->getLocalAddr().toIp();
     ws::setPingReplyMessage(wsConnPtr);
     caf::anon_send(ok::smart_actor::supervisor::mainActor, save_old_wsconnptr_atom_v, wsConnPtr, req->getCookie("jwt"), ok::utils::html::getSubdomain(req->getHeader("host")));
   }

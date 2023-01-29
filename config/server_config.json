@@ -4,11 +4,11 @@
     "key": "/root/.acme.sh/o-k.tech/o-k.tech.key"
   },
   "listeners": [
-    {
-      "address": "0.0.0.0",
-      "port": 8500,
-      "https": false
-    }
+    //{
+    //  "address": "0.0.0.0",
+    //  "port": 8500,
+    //  "https": false
+    //}
     // {
     //   "address": "0.0.0.0",
     //   "port": 443,
@@ -113,20 +113,11 @@
   "custom_config": {
     "server_url": "http://localhost:8500",
     "drogon_root": "../drogonroot",
-    "hetzner_token": "wR0HVBg3wCjloNRwZlK5K3XZMdXixtKTYOfQxAXKHAyuAPMHsqSyS1j5EAI1lURQ",
-    "hetzner_servers": "curl -H \"Authorization: Bearer wR0HVBg3wCjloNRwZlK5K3XZMdXixtKTYOfQxAXKHAyuAPMHsqSyS1j5EAI1lURQ\"  https://api.hetzner.cloud/v1/servers",
-    "MATOMO_ADDRESS": "",
-    "debug": false,
+     "debug": false,
     "routes": {
         "web": [
             {"route": "/manifest.json", "type": "static", "url": "_system/web/public/manifest.json"},
             {"route": "/service-worker.js", "type": "static", "url": "_system/web/public/service-worker.js"},
-            {"route": "403.html", "type": "static", "url": "_system/web/public/403.html"},
-            {"route": "404.html", "type": "static", "url": "_system/web/public/404.html"},
-            {"route": "413.html", "type": "static", "url": "_system/web/public/413.html"},
-            {"route": "500.html", "type": "static", "url": "_system/web/public/500.html"},
-            {"route": "/web", "type": "static", "url": "_system/web/index.html"},
-            {"route": "/robots.txt", "type": "static", "url": "_system/web/robots.txt"},
             {"route": "/web/(.*)", "type": "regex", "url": "_system/web/$1","default":["index.html"]},
         ]
     }

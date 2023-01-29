@@ -4,6 +4,7 @@
 #include "third_party/mgclient/src/mgvalue.h"
 #include "utils/BatchArrayMessage.hpp"
 #include "utils/mg_helper.hpp"
+#include "utils/time_functions.hpp"
 namespace ok::smart_actor
 {
 namespace supervisor
@@ -46,6 +47,19 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
                       << "]: " << caf::deep_to_string(x);
             return caf::message{};
         });
+    mg::Client::Params params;
+    params.host = "localhost";
+    params.port = global_var::mg_port;
+    params.use_ssl = false;
+    auto client = mg::Client::Connect(params);
+    self->state.connPtr = std::move(client);
+    if (self->state.connPtr)
+    {
+    }
+    else
+    {
+        LOG_DEBUG << "Failed to connect!";
+    }
     return {
         [=](caf::subscribe_atom,
             WsEvent const &event,
@@ -60,21 +74,62 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
             }
             jsoncons::ojson nodes = jsoncons::ojson::array();
             jsoncons::ojson relationships = jsoncons::ojson::array();
-            auto response1 =
-                ok::db::memgraph_conns.request("MATCH (n) RETURN n;");
-            auto response2 =
-                ok::db::memgraph_conns.request("MATCH ()-[r]->() RETURN r;");
-            for (auto &row : response1)
-                for (auto &matchPart : row)
-                    if (matchPart.type() == mg::Value::Type::Node)
-                        nodes.push_back(
-                            convertNodeToJson(matchPart.ValueNode()));
-            for (auto &row : response2)
-                for (auto &matchPart : row)
-                    if (matchPart.type() == mg::Value::Type::Relationship)
-                        relationships.push_back(convertRelationshipToJson(
-                            matchPart.ValueRelationship()));
+
+            if (!self->state.connPtr->Execute("MATCH (n) RETURN n;"))
+            {
+                std::cerr << "Failed to execute query!"
+                          << "MATCH (n) RETURN n;"
+                          << " "
+                          << mg_session_error(self->state.connPtr->session_);
+            }
+            try
+            {
+                const auto maybeResult = self->state.connPtr->FetchAll();
+                if (maybeResult)
+                    for (auto &row : *maybeResult)
+                        for (auto &matchPart : row)
+                            if (matchPart.type() == mg::Value::Type::Node)
+                                nodes.push_back(
+                                    convertNodeToJson(matchPart.ValueNode()));
+            }
+            catch (mg::ClientException e)
+            {
+                jsoncons::ojson result;
+                result["error"] = true;
+                result["message"] = e.what();
+                LOG_DEBUG << e.what();
+                reconnect(self->state.connPtr);
+            }
+            if (!self->state.connPtr->Execute("MATCH ()-[r]->() RETURN r;"))
+            {
+                std::cerr << "Failed to execute query!"
+                          << "MATCH (n) RETURN n;"
+                          << " "
+                          << mg_session_error(self->state.connPtr->session_);
+            }
+            try
+            {
+                const auto maybeResult = self->state.connPtr->FetchAll();
+                if (maybeResult)
+                    for (auto &row : *maybeResult)
+                        for (auto &matchPart : row)
+                            if (matchPart.type() ==
+                                mg::Value::Type::Relationship)
+                                relationships.push_back(
+                                    convertRelationshipToJson(
+                                        matchPart.ValueRelationship()));
+            }
+            catch (mg::ClientException e)
+            {
+                jsoncons::ojson result;
+                result["error"] = true;
+                result["message"] = e.what();
+                LOG_DEBUG << e.what();
+                reconnect(self->state.connPtr);
+            }
+
             jsoncons::ojson result;
+            result["timestemp"] = ok::utils::time::getEpochMilliseconds();
             result["vertexes"] = nodes;
             result["edges"] = relationships;
             auto msg = ok::smart_actor::connection::wsMessageBase();
@@ -143,5 +198,25 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
             self->unbecome();
         }};
 }
+
+void reconnect(syncActorState::DbConnectionPtr connPtr)
+{
+    connPtr->Finalize();
+    mg::Client::Params params;
+    params.host = "localhost";
+    params.port = global_var::mg_port;
+    params.use_ssl = false;
+    auto client = mg::Client::Connect(params);
+    connPtr = std::move(client);
+    if (connPtr)
+    {
+    }
+    else
+    {
+        LOG_DEBUG << "Failed to connect!";
+        return;
+    }
+}
+
 }  // namespace supervisor
 }  // namespace ok::smart_actor

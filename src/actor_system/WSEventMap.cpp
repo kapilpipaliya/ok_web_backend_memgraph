@@ -26,7 +26,7 @@ void addAuthRoutes()
 {
     routeFunctions["register"] = [](RouteArgs) {
         if (auto [error, userId] = ok::db::auth::registerFn(args);
-            error.empty())
+            error.empty() && userId != 0)
         {
             session.memberKey = userId;
             ok::smart_actor::connection::addSuccess(resultMsg, event);
@@ -47,7 +47,8 @@ void addAuthRoutes()
         }
     };
     routeFunctions["login"] = [](RouteArgs) {
-        if (auto [error, userId] = ok::db::auth::login(args); error.empty())
+        if (auto [error, userId] = ok::db::auth::login(args);
+            error.empty() && userId != 0)
         {
             session.memberKey = userId;
             ok::smart_actor::connection::addSuccess(resultMsg, event);
