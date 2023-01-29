@@ -134,6 +134,19 @@ void registerRegexApi()
     &api::system_::foxxApiResponse, {drogon::Post, drogon::Get, drogon::Patch,
     drogon::Put, drogon::Options, drogon::Head, drogon::Delete});
     */
+
+    drogon::app().registerHandlerViaRegex(
+        "/admin(.*)",
+        [](drogon::HttpRequestPtr const &req,
+           std::function<void(drogon::HttpResponsePtr const &)> &&callback,
+           std::string &&urlPart) {
+            Json::Value result;
+            auto resp = drogon::HttpResponse::newFileResponse(
+                "/home/k/admin/dist/index.html");
+            callback(resp);
+        },
+
+        {drogon::Get});
 }
 namespace file
 {
