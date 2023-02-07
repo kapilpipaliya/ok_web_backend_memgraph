@@ -254,7 +254,7 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                      txns[transactions].array_range())
                 {
                     for (auto const &key : std::vector<std::string>{
-                             "insert", "replace", "deleteVertex"})
+                             "insert", "replace", "merge", "deleteVertex"})
                     {
                         if (mutationObject.contains(key) &&
                             !mutationObject[key].is_object())
@@ -445,6 +445,61 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                                     responseResult,
                                     event,
                                     "Cant insert because internal server "
+                                    "error."));
+                        }
+                        try
+                        {
+                            const auto maybeResult =
+                                self->state.connPtr->FetchAll();
+                            auto result = jsoncons::ojson{};
+                            result["error"] = false;
+                            txnResult.push_back(result);
+                        }
+                        catch (mg::ClientException e)
+                        {
+                            // TODO: report error to db, reason, status code
+                            // everything;
+                            self->state.connPtr->RollbackTransaction();
+                            return self->send(
+                                connectionActor,
+                                caf::forward_atom_v,
+                                ok::smart_actor::connection::addFailure(
+                                    responseResult,
+                                    event,
+                                    std::string{"Cant replace because internal "
+                                                "server error."} +
+                                        e.what()));
+                        }
+                    }
+                    if (jsoncons::ObjectMemberIsObject(mutationObject, "merge"))
+                    {
+                        int id = mutationObject["merge"]["id"].as<int64_t>();
+                        if (clientToServerVertexIdMap.contains(id))
+                            id = clientToServerVertexIdMap[id];
+                        ok::db::MGParams p2{{"id", mg_value_make_integer(id)}};
+                        std::string query{
+                            "MATCH (n) WHERE ID(n) = $id SET n += "};
+                        query.append(jsonToMemGraphQueryObject(
+                            mutationObject["merge"]["properties"]));
+                        query.append(" RETURN n;");
+
+                        if (!self->state.connPtr->Execute(query,
+                                                          p2.asConstMap()))
+                        {
+                            std::cerr << "Failed to execute query!" << query
+                                      << " "
+                                      << mg_session_error(
+                                             self->state.connPtr->session_);
+                            // TODO: report error to db, reason, status code
+                            // everything;
+                            self->state.connPtr->RollbackTransaction();
+                            return self->send(
+                                connectionActor,
+                                caf::forward_atom_v,
+                                ok::smart_actor::connection::addFailure(
+                                    responseResult,
+                                    event,
+                                    "Cant merge because internal server "
                                     "error."));
                         }
                         try
