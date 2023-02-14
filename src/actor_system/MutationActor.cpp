@@ -635,10 +635,11 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                                                   *maybeResult);
                                 clientToServerEdgeIdMap.emplace(
                                     std::pair{oldEdgeId, id});
-                                auto insertEdgeResult =
-                                    jsoncons::ojson::array();
-                                insertEdgeResult.push_back(oldEdgeId);
-                                insertEdgeResult.push_back(id);
+                                jsoncons::ojson insertEdgeResult;
+                                auto result = jsoncons::ojson::array();
+                                result.push_back(oldEdgeId);
+                                result.push_back(id);
+                                insertEdgeResult["insertEdge"] = result;
                                 txnResult.push_back(insertEdgeResult);
                             }
                         }
