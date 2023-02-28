@@ -162,8 +162,7 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                                   ok::smart_actor::connection::addFailure(
                                       responseResult,
                                       event,
-                                      "Invalid argument shape, the argument to "
-                                      "sync(mutate) must be an array"));
+                                      "Failed to connect MG Server"));
             }
             self->state.connPtr = std::move(client);
 
@@ -387,8 +386,7 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                                 auto oldId =
                                     mutationObject["insert"]["id"].as<int>();
                                 auto id =
-                                    ok::db::memgraph_conns.getIdFromResponse(
-                                        *maybeResult);
+                                    ok::db::getIdFromResponse(*maybeResult);
                                 clientToServerVertexIdMap.emplace(
                                     std::pair{oldId, id});
                                 jsoncons::ojson insertResult;
@@ -630,9 +628,8 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                                 auto oldEdgeId =
                                     mutationObject["insertEdge"]["id"]
                                         .as<int>();
-                                auto id = ok::db::memgraph_conns
-                                              .getIdFromRelationshipResponse(
-                                                  *maybeResult);
+                                auto id = ok::db::getIdFromRelationshipResponse(
+                                    *maybeResult);
                                 clientToServerEdgeIdMap.emplace(
                                     std::pair{oldEdgeId, id});
                                 jsoncons::ojson insertEdgeResult;

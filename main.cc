@@ -41,90 +41,91 @@ void runDrogon(int port)
 
 void memGraphTest()
 {
-    auto response =
-        ok::db::memgraph_conns.request("MATCH (n)-[r]->(m) RETURN n,r,m;");
-    for (auto& row : response)
-    {
-        for (auto& matchPart : row)
-        {
-            switch (matchPart.type())
-            {
-                case mg::Value::Type::Null:
-                    LOG_DEBUG << "null";
-                    break;
-                case mg::Value::Type::Bool:
-                    LOG_DEBUG << matchPart.ValueBool();
-                    break;
-                case mg::Value::Type::Int:
-                    LOG_DEBUG << matchPart.ValueInt();
-                    break;
-                case mg::Value::Type::Double:
-                    LOG_DEBUG << matchPart.ValueDouble();
-                    break;
-                case mg::Value::Type::String:
-                    LOG_DEBUG << matchPart.ValueString();
-                    break;
-                case mg::Value::Type::List:
-                    LOG_DEBUG << "List";
-                    break;
-                case mg::Value::Type::Map:
-                    LOG_DEBUG << "Map";
-                    break;
-                case mg::Value::Type::Node:
-                {
-                    const auto json =
-                        convertNodeToJson(std::move(matchPart.ValueNode()));
-                    LOG_DEBUG << json.to_string();
-                    break;
-                }
-                case mg::Value::Type::Relationship:
-                {
-                    const auto json = convertRelationshipToJson(
-                        std::move(matchPart.ValueRelationship()));
-                    LOG_DEBUG << json.to_string();
-                    break;
-                }
-                case mg::Value::Type::UnboundRelationship:
-                    LOG_DEBUG << "UnboundRelationship";
-                    break;
-                case mg::Value::Type::Path:
-                    LOG_DEBUG << "Path";
-                    break;
-                case mg::Value::Type::Date:
-                    LOG_DEBUG << "Date";
-                    break;
-                case mg::Value::Type::Time:
-                    LOG_DEBUG << "Time";
-                    break;
-                case mg::Value::Type::LocalTime:
-                    LOG_DEBUG << "LocalTime";
-                    break;
-                case mg::Value::Type::DateTime:
-                    LOG_DEBUG << "DateTime";
-                    break;
-                case mg::Value::Type::DateTimeZoneId:
-                    LOG_DEBUG << "DateTimeZoneId";
-                    break;
-                case mg::Value::Type::LocalDateTime:
-                    LOG_DEBUG << "LocalDateTime";
-                    break;
-                case mg::Value::Type::Duration:
-                    LOG_DEBUG << "Duration";
-                    break;
-                case mg::Value::Type::Point2d:
-                    LOG_DEBUG << "Point2d";
-                    break;
-                case mg::Value::Type::Point3d:
-                    LOG_DEBUG << "Point3d";
-                    break;
-            }
-        }
-    }
+    //    auto response =
+    //        ok::db::memgraph_conns.request("MATCH (n)-[r]->(m) RETURN
+    //        n,r,m;");
+    //    for (auto& row : response)
+    //    {
+    //        for (auto& matchPart : row)
+    //        {
+    //            switch (matchPart.type())
+    //            {
+    //                case mg::Value::Type::Null:
+    //                    LOG_DEBUG << "null";
+    //                    break;
+    //                case mg::Value::Type::Bool:
+    //                    LOG_DEBUG << matchPart.ValueBool();
+    //                    break;
+    //                case mg::Value::Type::Int:
+    //                    LOG_DEBUG << matchPart.ValueInt();
+    //                    break;
+    //                case mg::Value::Type::Double:
+    //                    LOG_DEBUG << matchPart.ValueDouble();
+    //                    break;
+    //                case mg::Value::Type::String:
+    //                    LOG_DEBUG << matchPart.ValueString();
+    //                    break;
+    //                case mg::Value::Type::List:
+    //                    LOG_DEBUG << "List";
+    //                    break;
+    //                case mg::Value::Type::Map:
+    //                    LOG_DEBUG << "Map";
+    //                    break;
+    //                case mg::Value::Type::Node:
+    //                {
+    //                    const auto json =
+    //                        convertNodeToJson(std::move(matchPart.ValueNode()));
+    //                    LOG_DEBUG << json.to_string();
+    //                    break;
+    //                }
+    //                case mg::Value::Type::Relationship:
+    //                {
+    //                    const auto json = convertRelationshipToJson(
+    //                        std::move(matchPart.ValueRelationship()));
+    //                    LOG_DEBUG << json.to_string();
+    //                    break;
+    //                }
+    //                case mg::Value::Type::UnboundRelationship:
+    //                    LOG_DEBUG << "UnboundRelationship";
+    //                    break;
+    //                case mg::Value::Type::Path:
+    //                    LOG_DEBUG << "Path";
+    //                    break;
+    //                case mg::Value::Type::Date:
+    //                    LOG_DEBUG << "Date";
+    //                    break;
+    //                case mg::Value::Type::Time:
+    //                    LOG_DEBUG << "Time";
+    //                    break;
+    //                case mg::Value::Type::LocalTime:
+    //                    LOG_DEBUG << "LocalTime";
+    //                    break;
+    //                case mg::Value::Type::DateTime:
+    //                    LOG_DEBUG << "DateTime";
+    //                    break;
+    //                case mg::Value::Type::DateTimeZoneId:
+    //                    LOG_DEBUG << "DateTimeZoneId";
+    //                    break;
+    //                case mg::Value::Type::LocalDateTime:
+    //                    LOG_DEBUG << "LocalDateTime";
+    //                    break;
+    //                case mg::Value::Type::Duration:
+    //                    LOG_DEBUG << "Duration";
+    //                    break;
+    //                case mg::Value::Type::Point2d:
+    //                    LOG_DEBUG << "Point2d";
+    //                    break;
+    //                case mg::Value::Type::Point3d:
+    //                    LOG_DEBUG << "Point3d";
+    //                    break;
+    //            }
+    //        }
+    //    }
 }
 void setupConstrains()
 {
-    auto response = ok::db::memgraph_conns.request(
-        "CREATE CONSTRAINT ON (u:User) ASSERT u.email IS UNIQUE");
+    //    auto response = ok::db::memgraph_conns.request(
+    //        "CREATE CONSTRAINT ON (u:User) ASSERT u.email IS UNIQUE");
 }
 }  // namespace
 int main(int argc, char* argv[])
@@ -139,7 +140,6 @@ int main(int argc, char* argv[])
     int port = std::stoi(std::string{argv[3]});
     loadDrogonConfig(argv[1]);
     // ok::smart_actor::connection::setGlobalVariables();
-    ok::db::initializeMemGraphPool(8);
     //  memGraphTest();
     setupConstrains();
     runActorFramework();

@@ -1,15 +1,11 @@
 #pragma once
 #include <drogon/HttpController.h>
-#include "alias.hpp"
 #include <drogon/WebSocketController.h>
 #include "actor_system/CAF.hpp"
 #include "utils/html_functions.hpp"
-#include "utils/BatchArrayMessage.hpp"
-#include "actor_system/WsConnectionActor.hpp"
 // #include "Actions/RestActionHandler.h"
 namespace ok
 {
-enum class ErrorCode;
 namespace smart_actor::connection
 {
 struct Session;
@@ -39,7 +35,6 @@ inline void sendMessageToMainActorOld(drogon::WebSocketConnectionPtr const &wsCo
 }
 inline void sendExitToMainActorOld(drogon::WebSocketConnectionPtr const &wsConnPtr)
 {
-  // caf::scoped_actor self{*ok::smart_actor::supervisor::actorSystem};
   caf::anon_send(ok::smart_actor::supervisor::mainActor, conn_exit_old_atom_v, wsConnPtr);
 }
 }  // namespace ws
@@ -74,7 +69,7 @@ bool initializeUser(ok::smart_actor::connection::Session &session) noexcept;
 bool isPermissionsOk() noexcept;
 // Fix this
 void sendSuccess(std::vector<std::string> const &savedKeys, std::function<void(drogon::HttpResponsePtr const &)> &callback) noexcept;
-void sendFailure(ErrorCode const error, std::function<void(drogon::HttpResponsePtr const &)> &callback) noexcept;
+void sendFailure(std::string const error, std::function<void(drogon::HttpResponsePtr const &)> &callback) noexcept;
 }  // namespace impl
 }  // namespace file
 namespace member

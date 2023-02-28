@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "db/mgclientPool.hpp"
 #include "db/auth_fns.hpp"
+#include "mgclient.hpp"
 
 // Demonstrate some basic assertions.
 TEST(HelloTest, BasicAssertions)
@@ -13,10 +14,21 @@ TEST(HelloTest, BasicAssertions)
 
 TEST(RegistrationTest, BasicAssertions)
 {
+    mg::Client::Params params;
+    params.host = "localhost";
+    params.port = global_var::mg_port;
+    params.use_ssl = false;
+    auto client = mg::Client::Connect(params);
+
     ok::db::MGParams p{{"email", mg_value_make_string("kapilp")}};
-    auto response =
-        ok::db::memgraph_conns.request("MATCH (u {email: $email}) DELETE u",
-                                       p.asConstMap());
+
+    if (!client->Execute("MATCH (u {email: $email}) DELETE u", p.asConstMap()))
+    {
+        std::cerr << "Failed to execute query!"
+                  << "MATCH (n) RETURN n;"
+                  << " " << mg_session_error(client->session_);
+    }
+
     jsoncons::ojson registerArgs = jsoncons::ojson::parse(R"(
     {
         "body": {
@@ -37,7 +49,6 @@ TEST(RegistrationTest, BasicAssertions)
 
 int main(int argc, char **argv)
 {
-    ok::db::initializeMemGraphPool(8);
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

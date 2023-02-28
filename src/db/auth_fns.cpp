@@ -35,22 +35,23 @@ std::tuple<std::string, int> ok::db::auth::registerFn(jsoncons::ojson const &o)
     auto email = o["body"]["email"].as_string();
     auto password = o["body"]["password"].as_string();
     ok::db::MGParams p{{"email", mg_value_make_string(email.c_str())}};
-    auto response = ok::db::memgraph_conns.request(
-        "MATCH (u:User {email: $email}) RETURN u", p.asConstMap());
-    if (response.size() > 0)
-        return {"Email Adress already exist", 0};
+    //    auto response = ok::db::memgraph_conns.request(
+    //        "MATCH (u:User {email: $email}) RETURN u", p.asConstMap());
+    //    if (response.size() > 0)
+    //        return {"Email Adress already exist", 0};
 
-    ok::db::MGParams p2{{"email", mg_value_make_string(email.c_str())},
-                        {"password", mg_value_make_string(password.c_str())},
-                        {"createdAt",
-                         mg_value_make_integer(
-                             utils::time::getEpochMilliseconds())}};
-    auto response2 = ok::db::memgraph_conns.request(
-        "CREATE (c:User {email: $email, password: $password, createdAt: "
-        "$createdAt}) "
-        "return c;",
-        p2.asConstMap());
-    return {"", ok::db::memgraph_conns.getIdFromResponse(response2)};
+    //    ok::db::MGParams p2{{"email", mg_value_make_string(email.c_str())},
+    //                        {"password",
+    //                        mg_value_make_string(password.c_str())},
+    //                        {"createdAt",
+    //                         mg_value_make_integer(
+    //                             utils::time::getEpochMilliseconds())}};
+    //    auto response2 = ok::db::memgraph_conns.request(
+    //        "CREATE (c:User {email: $email, password: $password, createdAt: "
+    //        "$createdAt}) "
+    //        "return c;",
+    //        p2.asConstMap());
+    //    return {"", ok::db::memgraph_conns.getIdFromResponse(response2)};
 }
 
 std::tuple<std::string, int> ok::db::auth::login(const jsoncons::ojson &o)
@@ -64,14 +65,15 @@ std::tuple<std::string, int> ok::db::auth::login(const jsoncons::ojson &o)
     }
     else
         return {"argument should be passed in body", 0};
-    auto email = o["body"]["email"].as_string();
-    auto password = o["body"]["password"].as_string();
-    ok::db::MGParams p{{"email", mg_value_make_string(email.c_str())},
-                       {"password", mg_value_make_string(password.c_str())}};
-    auto response = ok::db::memgraph_conns.request(
-        "MATCH (u:User {email: $email, password: $password}) return u;",
-        p.asConstMap());
-    return {"", ok::db::memgraph_conns.getIdFromResponse(response)};
+    //    auto email = o["body"]["email"].as_string();
+    //    auto password = o["body"]["password"].as_string();
+    //    ok::db::MGParams p{{"email", mg_value_make_string(email.c_str())},
+    //                       {"password",
+    //                       mg_value_make_string(password.c_str())}};
+    //    auto response = ok::db::memgraph_conns.request(
+    //        "MATCH (u:User {email: $email, password: $password}) return u;",
+    //        p.asConstMap());
+    //    return {"", ok::db::memgraph_conns.getIdFromResponse(response)};
 }
 
 // wip
@@ -102,26 +104,26 @@ std::tuple<std::string, std::string> ok::db::auth::change_password(
     ok::db::MGParams p{{"email", mg_value_make_string(email.c_str())},
                        {"password",
                         mg_value_make_string(old_password.c_str())}};
-    auto response = ok::db::memgraph_conns.request(
-        "MATCH (u:User {email: $email, password: $password}) return u;",
-        p.asConstMap());
-    if (ok::db::memgraph_conns.getIdFromResponse(response) == 0)
-        return {"Old password is not correct", ""};
+    //    auto response = ok::db::memgraph_conns.request(
+    //        "MATCH (u:User {email: $email, password: $password}) return u;",
+    //        p.asConstMap());
+    //    if (ok::db::memgraph_conns.getIdFromResponse(response) == 0)
+    //        return {"Old password is not correct", ""};
 
-    ok::db::MGParams p2{{"email", mg_value_make_string(email.c_str())},
-                        {"password",
-                         mg_value_make_string(old_password.c_str())},
-                        {"newPassword",
-                         mg_value_make_string(new_password.c_str())}};
-    auto response2 = ok::db::memgraph_conns.request(
-        "MATCH (u:User {email: $email, password: $password}) SET "
-        "u.pass = $newPassword return u;",
-        p2.asConstMap());
-    auto userId = ok::db::memgraph_conns.getIdFromResponse(response);
-    if (userId == 0)
-        return {"cant set new password", ""};
-    else
-        return {"", "Success"};
+    //    ok::db::MGParams p2{{"email", mg_value_make_string(email.c_str())},
+    //                        {"password",
+    //                         mg_value_make_string(old_password.c_str())},
+    //                        {"newPassword",
+    //                         mg_value_make_string(new_password.c_str())}};
+    //    auto response2 = ok::db::memgraph_conns.request(
+    //        "MATCH (u:User {email: $email, password: $password}) SET "
+    //        "u.pass = $newPassword return u;",
+    //        p2.asConstMap());
+    //    auto userId = ok::db::memgraph_conns.getIdFromResponse(response);
+    //    if (userId == 0)
+    //        return {"cant set new password", ""};
+    //    else
+    //        return {"", "Success"};
 }
 
 std::tuple<std::string, jsoncons::ojson> ok::db::auth::user(int const memberKey)
@@ -130,11 +132,12 @@ std::tuple<std::string, jsoncons::ojson> ok::db::auth::user(int const memberKey)
         return {"Not Logged In", ""};
 
     ok::db::MGParams p{{"id", mg_value_make_integer(memberKey)}};
-    auto response =
-        ok::db::memgraph_conns.request("MATCH (u) WHERE ID(u) = $id RETURN u",
-                                       p.asConstMap());
-    if (response.size() > 0)
-        return {"", convertNodeToJson(response[0][0].ValueNode())};
-    else
-        return {"user not exist", ""};
+    //    auto response =
+    //        ok::db::memgraph_conns.request("MATCH (u) WHERE ID(u) = $id RETURN
+    //        u",
+    //                                       p.asConstMap());
+    //    if (response.size() > 0)
+    //        return {"", convertNodeToJson(response[0][0].ValueNode())};
+    //    else
+    //        return {"user not exist", ""};
 }

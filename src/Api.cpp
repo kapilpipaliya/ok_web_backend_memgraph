@@ -20,28 +20,7 @@ namespace ok::api
 {
 using drogon::HttpRequestPtr;
 using drogon::HttpResponsePtr;
-std::string HttpMethodToString(drogon::HttpMethod method)
-{
-    switch (method)
-    {
-        case drogon::Get:
-            return "get";
-        case drogon::Post:
-            return "post";
-        case drogon::Head:
-            return "head";
-        case drogon::Put:
-            return "put";
-        case drogon::Delete:
-            return "delete";
-        case drogon::Options:
-            return "options";
-        case drogon::Patch:
-            return "patch";
-        case drogon::Invalid:
-            return "invalid";
-    }
-}
+
 void registerApi()
 {
     drogon::app().registerHandler("/api/upload", &file::upload, {drogon::Post});

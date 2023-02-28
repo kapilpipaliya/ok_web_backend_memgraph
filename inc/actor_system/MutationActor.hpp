@@ -9,7 +9,7 @@ namespace supervisor
 {
 struct mutationState
 {
-    static inline constexpr char const *name = "sync-actor";
+    static inline constexpr char const *name = "mutation-actor";
     ws_connector_actor_int wsActor;
     using DbConnectionPtr = std::shared_ptr<mg::Client>;
     DbConnectionPtr connPtr;

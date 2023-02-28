@@ -21,6 +21,12 @@ struct syncActorState
   std::unordered_map<ws_connector_actor_int, jsoncons::ojson, hash_name> wsActorArgs;
   using DbConnectionPtr = std::shared_ptr<mg::Client>;
   DbConnectionPtr connPtr;
+  mg::Client::Params params;
+  syncActorState(){
+        params.host = "localhost";
+        params.port = global_var::mg_port;
+        params.use_ssl = false;
+  }
 };
 using SyncActorPointer = sync_actor_int::stateful_pointer<syncActorState>;
 sync_actor_int::behavior_type SyncActor(SyncActorPointer self);
