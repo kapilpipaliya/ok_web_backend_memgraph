@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 #include "mgclient-value.hpp"
 namespace ok::db
 {
@@ -26,6 +27,8 @@ struct MGParams
     }
 };
 int getIdFromResponse(std::vector<std::vector<mg::Value> > const &response);
+std::vector<std::string> getIdsFromResponse(std::vector<std::vector<mg::Value> > const &response);
 int getIdFromRelationshipResponse(std::vector<std::vector<mg::Value> > const &response);
-
+std::pair<std::string, std::optional<std::vector<std::vector<mg::Value>>>>
+mgCall(std::string const &query, ok::db::MGParams &p);
 }  // namespace ok::db

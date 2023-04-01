@@ -20,6 +20,7 @@
 
 #include "mgclient-value.hpp"
 #include "mgclient.h"
+#include "alias.hpp"
 
 namespace mg {
 class MgException : public std::exception {
@@ -56,7 +57,7 @@ class Client {
  public:
   struct Params {
     std::string host = "127.0.0.1";
-    uint16_t port = 7687;
+    uint16_t port = global_var::mg_port;
     std::string username = "";
     std::string password = "";
     bool use_ssl = false;

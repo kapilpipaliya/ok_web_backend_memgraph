@@ -109,7 +109,7 @@ void saveNewConnection(
     auto memberKey = db::auth::getMemberKeyFromJwt(jwtEncoded);
     if (jwtEncoded.empty())
     {
-        state.session.memberKey = 0;
+        state.session.memberKey = -1;
         ok::smart_actor::connection::addIsLoggedIn(memberMsg, false);
     }
     else
@@ -118,7 +118,7 @@ void saveNewConnection(
         if (auto [error, member] = ok::db::auth::user(memberKey); error.empty())
             state.session.memberKey = member["id"].as<int>();
         else
-            state.session.memberKey = 0;
+            state.session.memberKey = -1;
         if (state.session.memberKey)
         {
             ok::smart_actor::connection::addIsLoggedIn(memberMsg, true);

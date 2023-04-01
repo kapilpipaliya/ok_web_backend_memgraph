@@ -11,16 +11,17 @@ namespace supervisor
 {
 
 void fetchNodesAPI(std::string query,
+                   ok::db::MGParams &p,
                    jsoncons::ojson &nodes,
                    syncActorState::DbConnectionPtr connPtr)
 {
-    if (!connPtr->Execute(query.c_str()))
+    if (!connPtr->Execute(query.c_str(), p.asConstMap()))
     {
         std::cerr << "Failed to execute query!"
                   << "MATCH (n) RETURN n;"
                   << " " << mg_session_error(connPtr->session_);
         reconnect(connPtr);
-        fetchNodesAPI(query, nodes, connPtr);
+        fetchNodesAPI(query, p, nodes, connPtr);
     }
     try
     {
@@ -45,16 +46,17 @@ void fetchNodesAPI(std::string query,
 }
 
 void fetchRelationshipsAPI(std::string query,
+                           ok::db::MGParams &p,
                            jsoncons::ojson &relationships,
                            syncActorState::DbConnectionPtr connPtr)
 {
-    if (!connPtr->Execute(query))
+    if (!connPtr->Execute(query, p.asConstMap()))
     {
         std::cerr << "Failed to execute query!"
                   << "MATCH (n) RETURN n;"
                   << " " << mg_session_error(connPtr->session_);
         reconnect(connPtr);
-        fetchRelationshipsAPI(query, relationships, connPtr);
+        fetchRelationshipsAPI(query, p, relationships, connPtr);
     }
     try
     {
@@ -138,11 +140,74 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
             jsoncons::ojson nodes = jsoncons::ojson::array();
             jsoncons::ojson relationships = jsoncons::ojson::array();
 
-            fetchNodesAPI("MATCH (n) RETURN n;", nodes, self->state.connPtr);
+            // 1. get all coll nodes.
+            // 2. if no memberKey send all public nodes and relationships.
+            // 3. if memberKey send data that user is allowed to see.
+            // 4. if super admin send all data.
+            if (memberKey == -1)
+            {
+                // get all public nodes:
+                ok::db::MGParams p2{};
+                auto [error, response] = db::mgCall(
+                    getAllNodesWithALabel("Coll", "WHERE n.public = true"), p2);
+                if (!error.empty())
+                {
+                    LOG_DEBUG << error;
+                }
+                else
+                {
+                    std::vector<std::string> labelVec{"DataType",
+                                                      "Comp",
+                                                      "Attr",
+                                                      "Coll"};
+                    auto getIdsFromResponse = db::getIdsFromResponse(*response);
+                    for (auto &id : getIdsFromResponse)
+                    {
+                        labelVec.emplace_back(id);
+                    }
 
-            fetchRelationshipsAPI("MATCH ()-[r]->() RETURN r;",
-                                  relationships,
-                                  self->state.connPtr);
+                    mg_list *labelList = mg_list_make_empty(labelVec.size());
+                    for (auto const &v : labelVec)
+                    {
+                        mg_list_append(labelList,
+                                       mg_value_make_string(v.c_str()));
+                    }
+                    ok::db::MGParams p1{{"ids", mg_value_make_list(labelList)}};
+                    std::string labels{};
+                    for (auto &id : labelVec)
+                    {
+                        labels += ":" + id;
+                    }
+                    fetchNodesAPI(
+                        "MATCH (n) WHERE all(k IN LABELS(n) WHERE k IN $ids) "
+                        "RETURN n;",
+                        p1,
+                        nodes,
+                        self->state.connPtr);
+
+                    fetchRelationshipsAPI(
+                        "MATCH (n)-[r]->(m) "
+                        "WHERE all(k IN LABELS(n) WHERE k IN $ids) AND "
+                        "all(k IN LABELS(m) WHERE k IN $ids) "
+                        "RETURN r;",
+                        p1,
+                        relationships,
+                        self->state.connPtr);
+                }
+            }
+            else
+            {
+                ok::db::MGParams p{};
+                fetchNodesAPI("MATCH (n) RETURN n;",
+                              p,
+                              nodes,
+                              self->state.connPtr);
+                ok::db::MGParams p1{};
+                fetchRelationshipsAPI("MATCH ()-[r]->() RETURN r;",
+                                      p1,
+                                      relationships,
+                                      self->state.connPtr);
+            }
 
             jsoncons::ojson result;
             result["timestemp"] = ok::utils::time::getEpochMilliseconds();

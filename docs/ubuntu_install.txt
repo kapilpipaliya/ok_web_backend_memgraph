@@ -62,3 +62,7 @@ tar -cvzf filename.tar.gz {files} {folders}.
 6. Restore Database dump:
 export PATH="$PWD/bin:$PATH"
 arangorestore --input-directory "dump" --all-databases true --create-database
+
+cp vcpkg/installed/x64-linux/include/jsoncons/json_encoder2.hpp third_party/one_file_lib/
+cp third_party/one_file_lib/json_encoder2.hpp vcpkg/installed/x64-linux/include/jsoncons/json_encoder2.hpp
+

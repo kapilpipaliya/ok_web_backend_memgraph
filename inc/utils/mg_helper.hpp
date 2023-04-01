@@ -9,3 +9,6 @@ jsoncons::ojson convertListToJson(mg::ConstList list);
 jsoncons::ojson memGraphMapToJson(mg::ConstMap map);
 jsoncons::ojson convertNodeToJson(mg::ConstNode node);
 jsoncons::ojson convertRelationshipToJson(mg::ConstRelationship relationship);
+inline std::string getAllNodesWithALabel(std::string const &label, std::string const &filter) {
+    return "MATCH (n:" + label + ") "  + filter + " RETURN n;";
+}

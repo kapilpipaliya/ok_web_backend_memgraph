@@ -26,7 +26,7 @@ void addAuthRoutes()
 {
     routeFunctions["register"] = [](RouteArgs) {
         if (auto [error, userId] = ok::db::auth::registerFn(args);
-            error.empty() && userId != 0)
+            error.empty() && userId != -1)
         {
             session.memberKey = userId;
             ok::smart_actor::connection::addSuccess(resultMsg, event);
@@ -42,13 +42,13 @@ void addAuthRoutes()
         }
         else
         {
-            session.memberKey = 0;
+            session.memberKey = -1;
             ok::smart_actor::connection::addFailure(resultMsg, event, error);
         }
     };
     routeFunctions["login"] = [](RouteArgs) {
         if (auto [error, userId] = ok::db::auth::login(args);
-            error.empty() && userId != 0)
+            error.empty() && userId != -1)
         {
             session.memberKey = userId;
             ok::smart_actor::connection::addSuccess(resultMsg, event);
@@ -64,7 +64,7 @@ void addAuthRoutes()
         }
         else
         {
-            session.memberKey = 0;
+            session.memberKey = -1;
             ok::smart_actor::connection::addFailure(resultMsg, event, error);
         }
     };
@@ -76,7 +76,7 @@ void addAuthRoutes()
             ok::smart_actor::connection::addSuccess(resultMsg, event);
         else
         {
-            session.memberKey = 0;
+            session.memberKey = -1;
             ok::smart_actor::connection::addFailure(resultMsg, event, error);
         }
     };
@@ -99,15 +99,15 @@ void addAuthRoutes()
         }
         else
         {
-            session.memberKey = 0;
+            session.memberKey = -1;
             ok::smart_actor::connection::addFailure(resultMsg, event, error);
         }
     };
     routeFunctions["logout"] = [](RouteArgs) {
-        session.memberKey = 0;
+        session.memberKey = -1;
         ok::smart_actor::connection::addSuccess(resultMsg, event);
         ok::smart_actor::connection::addJwtCookie(
-            resultMsg, {{"memberKey", std::to_string(0)}}, 60 * 60 * 24);
+            resultMsg, {{"memberKey", std::to_string(-1)}}, 60 * 60 * 24);
     };
     routeFunctions["confirm_email"] = [](RouteArgs) {
 
