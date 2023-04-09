@@ -13,13 +13,12 @@ namespace supervisor
 void fetchNodesAPI(std::string query,
                    ok::db::MGParams &p,
                    jsoncons::ojson &nodes,
-                   syncActorState::DbConnectionPtr connPtr)
+                   syncActorState::DbConnectionPtr &connPtr)
 {
     if (!connPtr->Execute(query.c_str(), p.asConstMap()))
     {
-        std::cerr << "Failed to execute query!"
-                  << "MATCH (n) RETURN n;"
-                  << " " << mg_session_error(connPtr->session_);
+        LOG_DEBUG << "Failed to execute query!" << query << " "
+                  << mg_session_error(connPtr->session_);
         reconnect(connPtr);
         fetchNodesAPI(query, p, nodes, connPtr);
     }
@@ -48,13 +47,12 @@ void fetchNodesAPI(std::string query,
 void fetchRelationshipsAPI(std::string query,
                            ok::db::MGParams &p,
                            jsoncons::ojson &relationships,
-                           syncActorState::DbConnectionPtr connPtr)
+                           syncActorState::DbConnectionPtr &connPtr)
 {
     if (!connPtr->Execute(query, p.asConstMap()))
     {
-        std::cerr << "Failed to execute query!"
-                  << "MATCH (n) RETURN n;"
-                  << " " << mg_session_error(connPtr->session_);
+        LOG_DEBUG << "Failed to execute query!" << query << " "
+                  << mg_session_error(connPtr->session_);
         reconnect(connPtr);
         fetchRelationshipsAPI(query, p, relationships, connPtr);
     }
@@ -144,7 +142,7 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
             // 2. if no memberKey send all public nodes and relationships.
             // 3. if memberKey send data that user is allowed to see.
             // 4. if super admin send all data.
-            if (memberKey == -1)
+            if (memberKey != -1)
             {
                 // get all public nodes:
                 ok::db::MGParams p2{};
@@ -282,7 +280,7 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
         }};
 }
 
-void reconnect(syncActorState::DbConnectionPtr connPtr)
+void reconnect(syncActorState::DbConnectionPtr &connPtr)
 {
     connPtr->Finalize();
     mg::Client::Params params;

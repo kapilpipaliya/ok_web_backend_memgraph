@@ -30,7 +30,7 @@ struct syncActorState
 };
 using SyncActorPointer = sync_actor_int::stateful_pointer<syncActorState>;
 sync_actor_int::behavior_type SyncActor(SyncActorPointer self);
-void reconnect(syncActorState::DbConnectionPtr connPtr);
+void reconnect(syncActorState::DbConnectionPtr &connPtr);
 namespace impl
 {
 }  // namespace impl
