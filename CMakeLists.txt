@@ -39,6 +39,8 @@ find_package(Drogon CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon)
 
 find_package(CAF CONFIG REQUIRED)
+# tried everything to load --logger.console.verbosity=trace --verbosity=trace from command line argument but not working.
+add_definitions(-DCAF_LOG_LEVEL=15)
 target_link_libraries(${PROJECT_NAME} PRIVATE CAF::io CAF::core CAF::test CAF::openssl)
 
 find_package(jsoncons CONFIG REQUIRED)

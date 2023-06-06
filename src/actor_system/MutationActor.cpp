@@ -33,30 +33,32 @@ std::string isProperNodeFormat(jsoncons::ojson node)
     {
         return "node must be an object";
     }
-    if (!node.contains("labels"))
+    if (!node.contains("L"))
     {
-        return "node must contain labels";
+        return "node must contain L (labels)";
     }
-    if (!node["labels"].is_array() && node["labels"].size() > 1)
+    if (!node["L"].is_array() && node["L"].size() > 1)
     {
-        return "node labels must be an array and should contain at least one "
+        return "node L (labels) must be an array and should contain at least "
+               "one "
                "item.";
     }
-    if (!node["labels"].is_array() && node["labels"].size() > 1)
+    if (!node["L"].is_array() && node["L"].size() > 1)
     {
-        return "node labels must be an array and should contain at least one "
+        return "node L (labels) must be an array and should contain at least "
+               "one "
                "item.";
     }
-    for (auto const &label : node["labels"].array_range())
+    for (auto const &label : node["L"].array_range())
     {
         if (!label.is_string())
         {
             return "node label must be a string";
         }
     }
-    if (!node.contains("properties") || !node["properties"].is_object())
+    if (!node.contains("P") || !node["P"].is_object())
     {
-        return "node must have properties key and it must be an object";
+        return "node must have P(properties) key and it must be an object";
     }
     if (!node.contains("id"))
     {
@@ -70,21 +72,21 @@ std::string isProperEdgeFormat(jsoncons::ojson edge)
     {
         return "edge must be an object";
     }
-    if (!edge.contains("type") || !edge["type"].is_string())
+    if (!edge.contains("T") || !edge["T"].is_string())
     {
-        return "edge must contain type and it must be a string.";
+        return "edge must contain T (type) and it must be a string.";
     }
-    if (!edge.contains("start") || !edge["start"].is_int64())
+    if (!edge.contains("S") || !edge["S"].is_int64())
     {
-        return "edge must contain start and it must be a integer.";
+        return "edge must contain S (start) and it must be a integer.";
     }
-    if (!edge.contains("end") || !edge["end"].is_int64())
+    if (!edge.contains("E") || !edge["E"].is_int64())
     {
-        return "edge must contain end and it must be a integer.";
+        return "edge must contain E (end) and it must be a integer.";
     }
-    if (!edge.contains("properties") || !edge["properties"].is_object())
+    if (!edge.contains("P") || !edge["P"].is_object())
     {
-        return "edge must have properties key and it must be an object";
+        return "edge must have P (properties) key and it must be an object";
     }
     if (!edge.contains("id"))
     {
@@ -348,14 +350,14 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
 
                         std::string labels;
                         for (auto const &label :
-                             mutationObject["insert"]["labels"].array_range())
+                             mutationObject["insert"]["L"].array_range())
                         {
                             labels.append(":");
                             labels.append(label.as_string());
                         }
                         query.append(labels);
                         query.append(jsonToMemGraphQueryObject(
-                            mutationObject["insert"]["properties"]));
+                            mutationObject["insert"]["P"]));
                         query.append(") ");
                         query.append(" RETURN n;");
 
@@ -423,7 +425,7 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                         std::string query{
                             "MATCH (n) WHERE ID(n) = $id SET n = "};
                         query.append(jsonToMemGraphQueryObject(
-                            mutationObject["replace"]["properties"]));
+                            mutationObject["replace"]["P"]));
                         query.append(" RETURN n;");
 
                         if (!self->state.connPtr->Execute(query,
@@ -478,7 +480,7 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                         std::string query{
                             "MATCH (n) WHERE ID(n) = $id SET n += "};
                         query.append(jsonToMemGraphQueryObject(
-                            mutationObject["merge"]["properties"]));
+                            mutationObject["merge"]["P"]));
                         query.append(" RETURN n;");
 
                         if (!self->state.connPtr->Execute(query,
@@ -579,11 +581,11 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                                                        "insertEdge"))
                     {
                         auto start =
-                            mutationObject["insertEdge"]["start"].as<int64_t>();
+                            mutationObject["insertEdge"]["S"].as<int64_t>();
                         if (clientToServerVertexIdMap.contains(start))
                             start = clientToServerVertexIdMap[start];
                         auto end =
-                            mutationObject["insertEdge"]["end"].as<int64_t>();
+                            mutationObject["insertEdge"]["E"].as<int64_t>();
                         if (clientToServerVertexIdMap.contains(end))
                             end = clientToServerVertexIdMap[end];
                         ok::db::MGParams p2{{"idstart",
@@ -595,9 +597,9 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                             "where "
                             "id(n2)=$idend merge (n1)-[r:"};
                         query.append(
-                            mutationObject["insertEdge"]["type"].as_string());
+                            mutationObject["insertEdge"]["T"].as_string());
                         query.append(jsonToMemGraphQueryObject(
-                            mutationObject["insertEdge"]["properties"]));
+                            mutationObject["insertEdge"]["P"]));
                         query.append("]->(n2) return r;");
 
                         if (!self->state.connPtr->Execute(query,
@@ -663,12 +665,12 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                             mutationObject["replaceEdge"]["id"].as<int64_t>();
                         if (clientToServerEdgeIdMap.contains(id))
                             id = clientToServerEdgeIdMap[id];
-                        auto start = mutationObject["replaceEdge"]["start"]
-                                         .as<int64_t>();
+                        auto start =
+                            mutationObject["replaceEdge"]["S"].as<int64_t>();
                         if (clientToServerVertexIdMap.contains(start))
                             start = clientToServerVertexIdMap[start];
                         auto end =
-                            mutationObject["replaceEdge"]["end"].as<int64_t>();
+                            mutationObject["replaceEdge"]["E"].as<int64_t>();
                         if (clientToServerVertexIdMap.contains(end))
                             end = clientToServerVertexIdMap[end];
 
@@ -683,10 +685,10 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                             "where "
                             "id(n2)=$idend match (n1)-[r:"};
                         query.append(
-                            mutationObject["replaceEdge"]["type"].as_string());
+                            mutationObject["replaceEdge"]["T"].as_string());
                         query.append("]-> (n2) where id(r) = $id set r = ");
                         query.append(jsonToMemGraphQueryObject(
-                            mutationObject["replaceEdge"]["properties"]));
+                            mutationObject["replaceEdge"]["P"]));
                         query.append(" return r;");
 
                         if (!self->state.connPtr->Execute(query,
@@ -705,7 +707,7 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                                 ok::smart_actor::connection::addFailure(
                                     responseResult,
                                     event,
-                                    "Cant replace edge properties because "
+                                    "Cant replace edge P (properties) because "
                                     "internal server error."));
                         }
                         try
@@ -736,7 +738,7 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                                      .as<int64_t>();
                         if (clientToServerEdgeIdMap.contains(id))
                             id = clientToServerEdgeIdMap[id];
-                        auto start = mutationObject["replaceEdgeStart"]["start"]
+                        auto start = mutationObject["replaceEdgeStart"]["S"]
                                          .as<int64_t>();
                         if (clientToServerVertexIdMap.contains(start))
                             start = clientToServerVertexIdMap[start];
@@ -746,7 +748,7 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                             {"newstart", mg_value_make_integer(start)},
                         };
                         std::string query{"match ()-[r:"};
-                        query.append(mutationObject["replaceEdgeStart"]["type"]
+                        query.append(mutationObject["replaceEdgeStart"]["T"]
                                          .as_string());
                         query.append(
                             "]->() "
@@ -754,7 +756,7 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                             "match (s) where id(s) = $newstart "
                             "match (e) where id(e) = id(endNode(r)) "
                             "merge (s)-[t:");
-                        query.append(mutationObject["replaceEdgeStart"]["type"]
+                        query.append(mutationObject["replaceEdgeStart"]["T"]
                                          .as_string());
                         query.append(
                             "]-> (e)"
@@ -810,8 +812,8 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                                      .as<int64_t>();
                         if (clientToServerEdgeIdMap.contains(id))
                             id = clientToServerEdgeIdMap[id];
-                        auto end = mutationObject["replaceEdgeEnd"]["end"]
-                                       .as<int64_t>();
+                        auto end =
+                            mutationObject["replaceEdgeEnd"]["E"].as<int64_t>();
                         if (clientToServerVertexIdMap.contains(end))
                             end = clientToServerVertexIdMap[end];
                         ok::db::MGParams p2{{"edgeid",
@@ -819,8 +821,8 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                                             {"newend",
                                              mg_value_make_integer(end)}};
                         std::string query{"match ()-[r:"};
-                        auto type = mutationObject["replaceEdgeEnd"]["type"]
-                                        .as_string();
+                        auto type =
+                            mutationObject["replaceEdgeEnd"]["T"].as_string();
                         query.append(type);
                         query.append(
                             "]->() "
@@ -884,11 +886,11 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                         if (clientToServerEdgeIdMap.contains(id))
                             id = clientToServerEdgeIdMap[id];
                         auto start =
-                            mutationObject["deleteEdge"]["start"].as<int64_t>();
+                            mutationObject["deleteEdge"]["S"].as<int64_t>();
                         if (clientToServerVertexIdMap.contains(start))
                             start = clientToServerVertexIdMap[start];
                         auto end =
-                            mutationObject["deleteEdge"]["end"].as<int64_t>();
+                            mutationObject["deleteEdge"]["E"].as<int64_t>();
                         if (clientToServerVertexIdMap.contains(end))
                             end = clientToServerVertexIdMap[end];
 
@@ -899,7 +901,7 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                                             {"id", mg_value_make_integer(id)}};
                         std::string query{"match (n1)-[r:"};
                         query.append(
-                            mutationObject["deleteEdge"]["type"].as_string());
+                            mutationObject["deleteEdge"]["T"].as_string());
                         query.append(
                             "]->(n2) where id(n1) = $idstart and id(n2) = "
                             "$idend and id(r) = $id "
@@ -910,7 +912,7 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                         {
                             LOG_DEBUG << "Failed to execute query!" << query
                                       << " "
-                                      << mutationObject["deleteEdge"]["type"]
+                                      << mutationObject["deleteEdge"]["T"]
                                              .as_cstring()
                                       << mg_session_error(
                                              self->state.connPtr->session_);

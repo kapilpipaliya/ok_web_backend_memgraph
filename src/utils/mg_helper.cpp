@@ -152,42 +152,70 @@ jsoncons::ojson memGraphMapToJson(mg::ConstMap map)
             }
             case mg::Value::Type::Date:
             {
-                //        properties[key] = value.ValueDate();
+                properties[key] = value.ValueDate().days();
                 break;
             }
             case mg::Value::Type::Time:
             {
-                //        properties[key] = value.ValueDateTime();
+                jsoncons::ojson val;
+                val["nanosec"] = value.ValueTime().nanoseconds();
+                val["tzsec"] = value.ValueTime().tz_offset_seconds();
+                properties[key] = val;
                 break;
             }
             case mg::Value::Type::LocalTime:
             {
-                //        properties[key] = value.ValueLocalTime();
+                properties[key] = value.ValueLocalTime().nanoseconds();
                 break;
             }
             case mg::Value::Type::DateTime:
             {
-                //        properties[key] = value.ValueLocalDateTime();
+                jsoncons::ojson val;
+                val["nanosec"] = value.ValueDateTime().nanoseconds();
+                val["tzmin"] = value.ValueDateTime().tz_offset_minutes();
+                properties[key] = val;
+                break;
             }
             case mg::Value::Type::DateTimeZoneId:
             {
-                //        properties[key] = value.ValueDateTimeZoneId();
+                jsoncons::ojson val;
+                val["nanosec"] = value.ValueDateTimeZoneId().nanoseconds();
+                val["tz"] = value.ValueDateTimeZoneId().tzId();
+                properties[key] = val;
+                break;
             }
             case mg::Value::Type::LocalDateTime:
             {
-                //        properties[key] = value.ValueLocalDateTime();
+                properties[key] = value.ValueLocalDateTime().nanoseconds();
+                break;
             }
             case mg::Value::Type::Duration:
             {
-                //        properties[key] = value.ValueDuration();
+                jsoncons::ojson val;
+                properties["days"] = value.ValueDuration().days();
+                properties["month"] = value.ValueDuration().months();
+                properties["second"] = value.ValueDuration().seconds();
+                properties["nanosec"] = value.ValueDuration().nanoseconds();
+                properties[key] = val;
+                break;
             }
             case mg::Value::Type::Point2d:
             {
-                //        properties[key] = value.ValuePoint2d();
+                jsoncons::ojson val;
+                val["srid"] = value.ValuePoint2d().srid();
+                val["x"] = value.ValuePoint2d().x();
+                val["y"] = value.ValuePoint2d().y();
+                properties[key] = val;
             }
             case mg::Value::Type::Point3d:
             {
-                //        properties[key] = value.ValuePoint3d();
+                jsoncons::ojson val;
+                properties["srid"] = value.ValuePoint3d().srid();
+                properties["x"] = value.ValuePoint3d().x();
+                properties["y"] = value.ValuePoint3d().y();
+                properties["z"] = value.ValuePoint3d().z();
+                properties[key] = val;
+                break;
             }
         }
     }
@@ -236,18 +264,19 @@ jsoncons::ojson convertNodeToJson(mg::ConstNode node)
         }
         array.push_back(label2);
     }
-    json["labels"] = array;
-    json["properties"] = memGraphMapToJson(std::move(node.properties()));
+    json["L"] = array;
+    json["P"] = memGraphMapToJson(std::move(node.properties()));
+    json["OUT"] = jsoncons::ojson::object();
+    json["IN"] = jsoncons::ojson::object();
     return json;
 }
 jsoncons::ojson convertRelationshipToJson(mg::ConstRelationship relationship)
 {
     jsoncons::ojson json;
     json["id"] = relationship.id().AsInt();
-    json["start"] = relationship.from().AsInt();
-    json["end"] = relationship.to().AsInt();
-    json["type"] = relationship.type();
-    json["properties"] =
-        memGraphMapToJson(std::move(relationship.properties()));
+    json["S"] = relationship.from().AsInt();
+    json["E"] = relationship.to().AsInt();
+    json["T"] = relationship.type();
+    json["P"] = memGraphMapToJson(std::move(relationship.properties()));
     return json;
 }

@@ -19,11 +19,11 @@ void loadDrogonConfig(const std::string& file)
     ok::smart_actor::connection::impl::addSyncRoutes();
     ok::smart_actor::connection::impl::addMutateRoutes();
 }
-void runActorFramework()
+void runActorFramework(int argc, char* argv[])
 {
     // ok::db::seed::newUserDatabase();
     // ok::smart_actor::connection::fetch();
-    ok::smart_actor::supervisor::initialiseMainActor();
+    ok::smart_actor::supervisor::initialiseMainActor(argc, argv);
     caf::anon_send(ok::smart_actor::supervisor::mainActor,
                    spawn_and_monitor_atom_v);
 }
@@ -142,6 +142,6 @@ int main(int argc, char* argv[])
     // ok::smart_actor::connection::setGlobalVariables();
     //  memGraphTest();
     setupConstrains();
-    runActorFramework();
+    runActorFramework(argc, argv);
     runDrogon(port);
 }

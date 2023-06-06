@@ -209,8 +209,36 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
 
             jsoncons::ojson result;
             result["timestemp"] = ok::utils::time::getEpochMilliseconds();
-            result["vertexes"] = nodes;
-            result["edges"] = relationships;
+
+            jsoncons::ojson vertexLabelIdMap;
+            jsoncons::ojson nodeObj;
+            for (auto const &n : nodes.array_range())
+            {
+                nodeObj[n["id"].as_string()] = n;
+                for (auto const &l : n["L"].array_range())
+                {
+                    if (vertexLabelIdMap[l.as_string_view()].empty())
+                    {
+                        vertexLabelIdMap[l.as_string_view()] =
+                            jsoncons::ojson(jsoncons::json_array_arg,
+                                            {n["id"]});
+                    }
+                    else
+                    {
+                        vertexLabelIdMap[l.as_string_view()].push_back(n["id"]);
+                    }
+                }
+            }
+            jsoncons::ojson relationshipObj;
+            for (auto const &r : relationships.array_range())
+            {
+                relationshipObj[r["id"].as_string()] = r;
+            }
+
+            result["vertexes"] = nodeObj;
+            result["vertexLabelIdMap"] = vertexLabelIdMap;
+            result["edges"] = relationshipObj;
+
             auto msg = ok::smart_actor::connection::wsMessageBase();
             ok::smart_actor::connection::addEventAndJson(msg, event, result);
             self->send(connectionActor, caf::forward_atom_v, msg);

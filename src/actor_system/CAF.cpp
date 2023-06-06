@@ -5,18 +5,26 @@ namespace ok::smart_actor
 {
 namespace supervisor
 {
-void initialiseMainActor() noexcept
+void initialiseMainActor(int argc, char *argv[]) noexcept
 {
     // Initialize the global type information before anything else.
     // caf::init_global_meta_objects<...>();
     caf::init_global_meta_objects<caf::id_block::okproject>();
     // caf::io::middleman::init_global_meta_objects();
     caf::core::init_global_meta_objects();
+    // Create the config.
     cfg = std::make_unique<caf::actor_system_config>();
-    if (auto err = cfg->parse(0, nullptr))
+    // Read CLI options.
+    // if (auto err = cfg->parse(0, nullptr))
+    if (auto err = cfg->parse(argc, argv))
+    // if (auto err = cfg->parse_config_file("caf-application.conf"))
     {
         std::cerr << to_string(err) << std::endl;
     }
+
+    // Return immediately if a help text was printed.
+    if (cfg->cli_helptext_printed)
+        return;
     actorSystem = std::make_unique<caf::actor_system>(*cfg);
     // self = std::make_unique<caf::scoped_actor>(*actorSystem);
     mainActor = actorSystem->spawn<caf::detached>(
@@ -25,7 +33,10 @@ void initialiseMainActor() noexcept
         ok::smart_actor::supervisor::SyncActor);
     // or
     // main_actor = self->spawn<MainActor>();
-    CAF_LOG_DEBUG("initialized caf system");
+    CAF_LOG_DEBUG("1initialized caf system");
+    CAF_LOG_TRACE("2initialized caf system");
+    CAF_LOG_INFO("3initialized caf system");
+    std::cerr << "DONE" << std::endl;
 }
 std::string getReasonString(caf::error &err) noexcept
 {

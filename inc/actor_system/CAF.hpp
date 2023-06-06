@@ -82,7 +82,7 @@ inline std::unique_ptr<caf::actor_system_config> cfg;
 inline std::unique_ptr<caf::actor_system> actorSystem;
 inline main_actor_int mainActor;
 inline sync_actor_int syncActor;
-void initialiseMainActor() noexcept;
+void initialiseMainActor(int argc, char *argv[]) noexcept;
 std::string getReasonString(caf::error &err) noexcept;
 using exception_handler = std::function<caf::error(caf::scheduled_actor *, std::exception_ptr &)>;
 exception_handler default_exception_handler(std::string const &msg);

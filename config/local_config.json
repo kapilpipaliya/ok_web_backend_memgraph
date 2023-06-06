@@ -9,7 +9,7 @@
   "app": {
     //threads_num: The number of IO threads, 1 by default, if the value is set to 0, the number of threads
     //is the number of CPU cores
-    "threads_num": 1,
+    "threads_num": 18,
     "enable_session": false,
     "session_timeout": 0,
     //document_root: Root path of HTTP document, defaut path is ./
@@ -132,7 +132,7 @@
     "client_max_body_size": "10M",
     //client_max_websocket_message_size: Set the max size of messages sent by WebSocket client. The default value is "128K".
     //One can set it to "1024", "1k", "10M", "1G", etc. Setting it to "" means no limit.
-    "client_max_websocket_message_size": ""
+    "client_max_websocket_message_size": "1G"
   },
   "plugins": [
     {
