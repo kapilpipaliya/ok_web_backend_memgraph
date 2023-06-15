@@ -1,5 +1,7 @@
 #include "utils/BatchArrayMessage.hpp"
 #include <trantor/utils/Logger.h>
+#include "db/auth_fns.hpp"
+#include "db/mgclientPool.hpp"
 #include "utils/html_functions.hpp"
 // #include "MutateSchema.hpp"
 #include "drogon/Cookie.h"
@@ -67,6 +69,21 @@ jsoncons::ojson addFailure(jsoncons::ojson &array,
 jsoncons::ojson addCurrentMember(jsoncons::ojson &array,
                                  VertexId const &memberKey) noexcept
 {
+    auto [error, user] = ok::db::auth::user(memberKey);
+    if (!error.empty())
+    {
+        LOG_DEBUG << error;
+        return array;
+    }
+
+    WsEvent event = jsoncons::ojson::array();
+    event.push_back("get");
+    event.push_back("member");
+    event.push_back(0);
+    jsoncons::ojson one = jsoncons::ojson::array();
+    one.push_back(event);
+    one.push_back(user);
+    array.push_back(one);
     return array;
 }
 jsoncons::ojson addEmptyMember(jsoncons::ojson &array) noexcept
@@ -74,7 +91,7 @@ jsoncons::ojson addEmptyMember(jsoncons::ojson &array) noexcept
     // [e,member]
     WsEvent event = jsoncons::ojson::array();
     event.push_back("get");
-    event.push_back("current_member_event");
+    event.push_back("member");
     event.push_back(0);
     jsoncons::ojson one = jsoncons::ojson::array();
     one.push_back(event);
@@ -139,22 +156,7 @@ jsoncons::ojson addLogout(jsoncons::ojson &array) noexcept
     array.push_back(one);
     return array;
 }
-jsoncons::ojson addIsLoggedIn(jsoncons::ojson &array, bool v) noexcept
-{
-    auto loginEvent =
-        jsoncons::ojson(jsoncons::json_array_arg, {"get", "is_logged_in", 0});
-    if (v)
-    {
-        ok::smart_actor::connection::addSuccess(array, loginEvent);
-    }
-    else
-    {
-        ok::smart_actor::connection::addFailure(array,
-                                                loginEvent,
-                                                "not logged in");
-    }
-    return array;
-}
+
 /*void setMemberFromJson(connection::Member &member, std::string const &json)
 {
   try

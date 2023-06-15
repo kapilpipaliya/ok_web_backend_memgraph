@@ -23,7 +23,6 @@ jsoncons::ojson wsMessageBase() noexcept;
 jsoncons::ojson addEventAndJson(jsoncons::ojson &array, WsEvent const &event, WsArguments const &args) noexcept;
 jsoncons::ojson addEventAndTwoJsonArgs(jsoncons::ojson &array, WsEvent const &event, WsArguments const &args1, WsArguments const &args2) noexcept;
 jsoncons::ojson addSuccess(jsoncons::ojson &array, WsEvent const &event) noexcept;
-jsoncons::ojson addIsLoggedIn(jsoncons::ojson &array, bool v) noexcept;
 inline jsoncons::ojson addSuccess(jsoncons::ojson &&array, WsEvent const &event) noexcept { return addSuccess(array, event); };
 jsoncons::ojson addFailure(jsoncons::ojson &array, WsEvent const &event, std::string const description) noexcept;
 jsoncons::ojson addCurrentMember(jsoncons::ojson &array, VertexId const &memberKey) noexcept;

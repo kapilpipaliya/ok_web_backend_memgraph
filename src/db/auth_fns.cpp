@@ -28,13 +28,13 @@ std::tuple<std::string, int> ok::db::auth::registerFn(jsoncons::ojson const &o)
     {
         if (!jsoncons::ObjectMemberIsString(o["body"], "email"))
             return {"Email Adress must be provided", -1};
-        if (!jsoncons::ObjectMemberIsString(o["body"], "password"))
+        if (!jsoncons::ObjectMemberIsString(o["body"], "pass"))
             return {"Password must be provided", -1};
     }
     else
         return {"argument should be passed in body", -1};
     auto email = o["body"]["email"].as_string();
-    auto password = o["body"]["password"].as_string();
+    auto password = o["body"]["pass"].as_string();
     ok::db::MGParams p{{"email", mg_value_make_string(email.c_str())}};
 
     std::string query{"MATCH (u:User {email: $email}) RETURN u;"};
@@ -49,13 +49,13 @@ std::tuple<std::string, int> ok::db::auth::registerFn(jsoncons::ojson const &o)
     }
 
     ok::db::MGParams p2{{"email", mg_value_make_string(email.c_str())},
-                        {"password", mg_value_make_string(password.c_str())},
+                        {"pass", mg_value_make_string(password.c_str())},
                         {"createdAt",
                          mg_value_make_integer(
                              utils::time::getEpochMilliseconds())}};
 
     const auto [error2, maybeResult2] = mgCall(
-        "CREATE (c:User {email: $email, password: $password, createdAt: "
+        "CREATE (c:User {email: $email, pass: $pass, createdAt: "
         "$createdAt}) return c;",
         p2);
     if (!error2.empty())
@@ -76,20 +76,19 @@ std::tuple<std::string, int> ok::db::auth::login(const jsoncons::ojson &o)
     {
         if (!jsoncons::ObjectMemberIsString(o["body"], "email"))
             return {"Email Adress must be provided", -1};
-        if (!jsoncons::ObjectMemberIsString(o["body"], "password"))
+        if (!jsoncons::ObjectMemberIsString(o["body"], "pass"))
             return {"Password must be provided", -1};
     }
     else
         return {"argument should be passed in body", -1};
 
     auto email = o["body"]["email"].as_string();
-    auto password = o["body"]["password"].as_string();
+    auto password = o["body"]["pass"].as_string();
 
     ok::db::MGParams p{{"email", mg_value_make_string(email.c_str())},
-                       {"password", mg_value_make_string(password.c_str())}};
+                       {"pass", mg_value_make_string(password.c_str())}};
 
-    std::string query{
-        "MATCH (u:User {email: $email, password: $password}) return u;"};
+    std::string query{"MATCH (u:User {email: $email, pass: $pass}) return u;"};
     const auto [error, maybeResult] = mgCall(query, p);
     if (!error.empty())
     {
@@ -125,11 +124,10 @@ std::tuple<std::string, std::string> ok::db::auth::change_password(
     auto email = o["body"]["email"].as_string();
 
     ok::db::MGParams p{{"email", mg_value_make_string(email.c_str())},
-                       {"password",
-                        mg_value_make_string(old_password.c_str())}};
+                       {"pass", mg_value_make_string(old_password.c_str())}};
 
     std::string query{
-        "MATCH (u:User {email: $email, password: $password}) return u;"};
+        "MATCH (u:User {email: $email, password: $pass}) return u;"};
     const auto [error, maybeResult] = mgCall(query, p);
     if (!error.empty())
     {
@@ -141,13 +139,12 @@ std::tuple<std::string, std::string> ok::db::auth::change_password(
     }
 
     ok::db::MGParams p2{{"email", mg_value_make_string(email.c_str())},
-                        {"password",
-                         mg_value_make_string(old_password.c_str())},
+                        {"pass", mg_value_make_string(old_password.c_str())},
                         {"newPassword",
                          mg_value_make_string(new_password.c_str())}};
 
     const auto [error2, maybeResult2] = mgCall(
-        "MATCH (u:User {email: $email, password: $password}) SET "
+        "MATCH (u:User {email: $email, pass: $pass}) SET "
         "u.pass = $newPassword return u;",
         p2);
     if (!error2.empty())
@@ -165,7 +162,7 @@ std::tuple<std::string, std::string> ok::db::auth::change_password(
 std::tuple<std::string, jsoncons::ojson> ok::db::auth::user(int const memberKey)
 {
     if (!memberKey)
-        return {"Not Logged In", ""};
+        return {"Not Logged In", jsoncons::ojson::null()};
 
     ok::db::MGParams p{{"id", mg_value_make_integer(memberKey)}};
 
@@ -173,22 +170,23 @@ std::tuple<std::string, jsoncons::ojson> ok::db::auth::user(int const memberKey)
     const auto [error, maybeResult] = mgCall(query, p);
     if (!error.empty())
     {
-        return {error, {}};
+        return {error, jsoncons::ojson::null()};
     }
     if (ok::db::getIdFromResponse(*maybeResult) == -1)
     {
-        return {"Old password is not correct", ""};
+        return {std::string{"User"} + std::to_string(memberKey) + " Not Found",
+                jsoncons::ojson::null()};
     }
     if (maybeResult)
     {
         if (maybeResult.value().size() > 0)
         {
             auto j = convertNodeToJson(maybeResult.value()[0][0].ValueNode());
-            j.erase("password");
+            j["P"].erase("pass");
             return {"", j};
         }
         else
-            return {"user not exist", ""};
+            return {"user not exist", jsoncons::ojson::null()};
     }
-    return {"user not exist", ""};
+    return {"user not exist", jsoncons::ojson::null()};
 }

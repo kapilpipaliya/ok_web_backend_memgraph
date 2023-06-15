@@ -106,28 +106,31 @@ void saveNewConnection(
     std::string const &firstSubDomain)
 {
     auto memberMsg = ok::smart_actor::connection::wsMessageBase();
+    WsEvent event = jsoncons::ojson::array();
+    event.push_back("get");
+    event.push_back("member");
+    event.push_back(0);
+    jsoncons::ojson one = jsoncons::ojson::array();
+    one.push_back(event);
+
     auto memberKey = db::auth::getMemberKeyFromJwt(jwtEncoded);
-    if (jwtEncoded.empty())
+    if (memberKey == -1)
     {
         state.session.memberKey = -1;
-        ok::smart_actor::connection::addIsLoggedIn(memberMsg, false);
+        one.push_back(jsoncons::ojson::null());
     }
     else
     {
         state.subDomain = firstSubDomain;
-        if (auto [error, member] = ok::db::auth::user(memberKey); error.empty())
+        auto [error, member] = ok::db::auth::user(memberKey);
+        if (error.empty())
             state.session.memberKey = member["id"].as<int>();
         else
             state.session.memberKey = -1;
-        if (state.session.memberKey)
-        {
-            ok::smart_actor::connection::addIsLoggedIn(memberMsg, true);
-            ok::smart_actor::connection::addCurrentMember(
-                memberMsg, state.session.memberKey);
-        }
-        else
-            ok::smart_actor::connection::addIsLoggedIn(memberMsg, false);
+
+        one.push_back(member);
     }
+    memberMsg.push_back(one);
     sendJson(state.wsConnPtr, memberMsg);
     // self->send(ok::smart_actor::supervisor::connectedActor, caf::add_atom_v,
     // state.session, self);

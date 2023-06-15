@@ -142,7 +142,35 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
             // 2. if no memberKey send all public nodes and relationships.
             // 3. if memberKey send data that user is allowed to see.
             // 4. if super admin send all data.
-            if (memberKey != -1)
+            bool superAdmin{false};
+            if (superAdmin)
+            {
+                ok::db::MGParams p{};
+                fetchNodesAPI("MATCH (n) RETURN n;",
+                              p,
+                              nodes,
+                              self->state.connPtr);
+                ok::db::MGParams p1{};
+                fetchRelationshipsAPI("MATCH ()-[r]->() RETURN r;",
+                                      p1,
+                                      relationships,
+                                      self->state.connPtr);
+            }
+            else if (memberKey != -1)
+            {
+                // temporary sending all data to logged in member:
+                ok::db::MGParams p{};
+                fetchNodesAPI("MATCH (n) RETURN n;",
+                              p,
+                              nodes,
+                              self->state.connPtr);
+                ok::db::MGParams p1{};
+                fetchRelationshipsAPI("MATCH ()-[r]->() RETURN r;",
+                                      p1,
+                                      relationships,
+                                      self->state.connPtr);
+            }
+            else
             {
                 // get all public nodes:
                 ok::db::MGParams p2{};
@@ -156,8 +184,13 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
                 {
                     std::vector<std::string> labelVec{"DataType",
                                                       "Comp",
+                                                      "CompProp",
                                                       "Attr",
-                                                      "Coll"};
+                                                      "Coll",
+                                                      "CollAttr",
+                                                      "CollAttrProp",
+                                                      "Nav",
+                                                      "NavAttr"};
                     auto getIdsFromResponse = db::getIdsFromResponse(*response);
                     for (auto &id : getIdsFromResponse)
                     {
@@ -192,19 +225,6 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
                         relationships,
                         self->state.connPtr);
                 }
-            }
-            else
-            {
-                ok::db::MGParams p{};
-                fetchNodesAPI("MATCH (n) RETURN n;",
-                              p,
-                              nodes,
-                              self->state.connPtr);
-                ok::db::MGParams p1{};
-                fetchRelationshipsAPI("MATCH ()-[r]->() RETURN r;",
-                                      p1,
-                                      relationships,
-                                      self->state.connPtr);
             }
 
             jsoncons::ojson result;

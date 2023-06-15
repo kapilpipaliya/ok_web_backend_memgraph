@@ -4,7 +4,7 @@ namespace ok::db
 {
 int getIdFromResponse(std::vector<std::vector<mg::Value>> const &response)
 {
-    int userId = 0;
+    int userId = -1;
     for (auto &row : response)
     {
         for (auto &matchPart : row)

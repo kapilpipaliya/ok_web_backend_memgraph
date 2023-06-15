@@ -38,7 +38,6 @@ void addAuthRoutes()
                 60 * 60 * 24);
             ok::smart_actor::connection::addCurrentMember(resultMsg,
                                                           session.memberKey);
-            ok::smart_actor::connection::addIsLoggedIn(resultMsg, true);
         }
         else
         {
@@ -60,11 +59,14 @@ void addAuthRoutes()
                 60 * 60 * 24);
             ok::smart_actor::connection::addCurrentMember(resultMsg,
                                                           session.memberKey);
-            ok::smart_actor::connection::addIsLoggedIn(resultMsg, true);
         }
         else
         {
             session.memberKey = -1;
+            if (error.empty())
+            {
+                error = "Email or Password is invalid";
+            }
             ok::smart_actor::connection::addFailure(resultMsg, event, error);
         }
     };
