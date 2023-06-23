@@ -72,18 +72,16 @@ void addAuthRoutes()
     };
 
     routeFunctions["loginJwt"] = [](RouteArgs) {
-        auto jwtEncoded = args["jwt"];
-        if (!jwtEncoded.contains("jwt") || !jwtEncoded.is_string())
+        if (!args["jwt"].contains("jwt") || !args["jwt"].is_string())
         {
             session.memberKey = -1;
             ok::smart_actor::connection::addFailure(resultMsg,
                                                     event,
-                                                    "Invalid Jwt");
+                                                    "Invalid Jwt Key");
             return;
         }
-
-        auto [memberKey, member] =
-            ok::db::auth::loginJwt(jwtEncoded.as_string());
+        auto jwtEncoded = args["jwt"].as_string();
+        auto [memberKey, member] = ok::db::auth::loginJwt(jwtEncoded);
 
         session.memberKey = memberKey;
         if (memberKey != -1)
