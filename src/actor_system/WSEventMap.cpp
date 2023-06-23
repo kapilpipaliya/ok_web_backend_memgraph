@@ -72,7 +72,7 @@ void addAuthRoutes()
     };
 
     routeFunctions["loginJwt"] = [](RouteArgs) {
-        if (!args["jwt"].contains("jwt") || !args["jwt"].is_string())
+        if (!args.contains("jwt") || !args["jwt"].is_string())
         {
             session.memberKey = -1;
             ok::smart_actor::connection::addFailure(resultMsg,
