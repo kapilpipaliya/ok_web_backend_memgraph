@@ -113,23 +113,11 @@ void saveNewConnection(
     jsoncons::ojson one = jsoncons::ojson::array();
     one.push_back(event);
 
-    auto memberKey = db::auth::getMemberKeyFromJwt(jwtEncoded);
-    if (memberKey == -1)
-    {
-        state.session.memberKey = -1;
-        one.push_back(jsoncons::ojson::null());
-    }
-    else
-    {
-        state.subDomain = firstSubDomain;
-        auto [error, member] = ok::db::auth::user(memberKey);
-        if (error.empty())
-            state.session.memberKey = member["id"].as<int>();
-        else
-            state.session.memberKey = -1;
+    auto [memberKey, member] = ok::db::auth::loginJwt(jwtEncoded);
+    state.session.memberKey = memberKey;
+    state.subDomain = firstSubDomain;
 
-        one.push_back(member);
-    }
+    one.push_back(member);
     memberMsg.push_back(one);
     sendJson(state.wsConnPtr, memberMsg);
     // self->send(ok::smart_actor::supervisor::connectedActor, caf::add_atom_v,

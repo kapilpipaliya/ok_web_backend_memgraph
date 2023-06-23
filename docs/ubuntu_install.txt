@@ -67,3 +67,19 @@ cp vcpkg/installed/x64-linux/include/jsoncons/json_encoder2.hpp third_party/one_
 cp third_party/one_file_lib/json_encoder2.hpp vcpkg/installed/x64-linux/include/jsoncons/json_encoder2.hpp
 
 if trantor is not installed in vcpkg because some old c symbols not defined, install drogon globally.
+
+TODO: Fix this:
+Failed to execute query!MATCH (n) WHERE ID(n) = $id SET n += {numberbox:2.333333333333333e+28} RETURN n; line 1:66 mismatched input 'e' expecting {'}', ','}mg_raw_transport_recv: connection closed by server
+
+
+ /home/k/pm2/1101_backend.sh
+ pm2 start 1101_backend.sh --name web_test
+ok_web_frontend_global]$ cp -r dist/ ~/admin/
+
+
+Configuration settings
+https://memgraph.com/docs/memgraph/reference-guide/configuration#other
+
+How to change configuration settings and access log files
+https://memgraph.com/docs/memgraph/how-to-guides/config-logs
+https://memgraph.com/docs/memgraph/next/how-to-guides/config-logs

@@ -2,6 +2,7 @@
 #include "db/mgclientPool.hpp"
 #include "third_party/mgclient/src/mgvalue.h"
 #include "jwt/jwt.hpp"
+#include "utils/BatchArrayMessage.hpp"
 #include "utils/html_functions.hpp"
 #include "utils/json_functions.hpp"
 #include "utils/mg_helper.hpp"
@@ -98,6 +99,27 @@ std::tuple<std::string, int> ok::db::auth::login(const jsoncons::ojson &o)
     return {"", ok::db::getIdFromResponse(*maybeResult)};
 }
 
+std::tuple<int, jsoncons::ojson> ok::db::auth::loginJwt(
+    std::string const &jwtEncoded)
+{
+    auto memberKey = db::auth::getMemberKeyFromJwt(jwtEncoded);
+    if (memberKey == -1)
+    {
+        return {memberKey, jsoncons::ojson::null()};
+    }
+    else
+    {
+        auto [error, member] = ok::db::auth::user(memberKey);
+        if (error.empty())
+        {
+            return {member["id"].as<int>(), member};
+        }
+        else
+        {
+            return {memberKey, jsoncons::ojson::null()};
+        }
+    }
+}
 // wip
 std::tuple<std::string, std::string> ok::db::auth::change_password(
     VertexId const &memberKey,

@@ -70,6 +70,35 @@ void addAuthRoutes()
             ok::smart_actor::connection::addFailure(resultMsg, event, error);
         }
     };
+
+    routeFunctions["loginJwt"] = [](RouteArgs) {
+        auto jwtEncoded = args["jwt"];
+        if (!jwtEncoded.contains("jwt") || !jwtEncoded.is_string())
+        {
+            session.memberKey = -1;
+            ok::smart_actor::connection::addFailure(resultMsg,
+                                                    event,
+                                                    "Invalid Jwt");
+            return;
+        }
+
+        auto [memberKey, member] =
+            ok::db::auth::loginJwt(jwtEncoded.as_string());
+
+        session.memberKey = memberKey;
+        if (memberKey != -1)
+        {
+            ok::smart_actor::connection::addEventAndJson(resultMsg,
+                                                         event,
+                                                         member);
+        }
+        else
+        {
+            ok::smart_actor::connection::addFailure(resultMsg,
+                                                    event,
+                                                    "Invalid Jwt");
+        }
+    };
     // wip
     routeFunctions["change_password"] = [](RouteArgs) {
         if (auto [error, successMsg] =
