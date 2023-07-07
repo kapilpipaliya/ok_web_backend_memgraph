@@ -62,14 +62,15 @@ namespace file
 // todo check permission
 void upload(drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpResponsePtr const &)> &&callback);
 // todo check permissions
+void download(drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpResponsePtr const &)> &&callback, int version, std::string const &key);
 namespace impl
 {
 ok::smart_actor::connection::Session getSession(drogon::HttpRequestPtr const &req);
 bool initializeUser(ok::smart_actor::connection::Session &session) noexcept;
 bool isPermissionsOk() noexcept;
 // Fix this
-void sendSuccess(std::vector<std::string> const &savedKeys, std::function<void(drogon::HttpResponsePtr const &)> &callback) noexcept;
-void sendFailure(std::string const error, std::function<void(drogon::HttpResponsePtr const &)> &callback) noexcept;
+void sendSuccess(std::vector<VertexId> const &savedKeys, std::function<void(drogon::HttpResponsePtr const &)> &callback) noexcept;
+void sendFailure( ErrorMsg const &error, std::function<void(drogon::HttpResponsePtr const &)> &callback) noexcept;
 }  // namespace impl
 }  // namespace file
 namespace member

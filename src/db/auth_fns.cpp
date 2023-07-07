@@ -23,7 +23,7 @@ int ok::db::auth::getMemberKeyFromJwt(std::string const &jwtEncodedCookie)
     return memberKey;
 }
 
-std::tuple<std::string, int> ok::db::auth::registerFn(jsoncons::ojson const &o)
+std::tuple<ErrorMsg, int> ok::db::auth::registerFn(jsoncons::ojson const &o)
 {
     if (jsoncons::ObjectMemberIsObject(o, "body"))
     {
@@ -71,7 +71,7 @@ std::tuple<std::string, int> ok::db::auth::registerFn(jsoncons::ojson const &o)
         return {"", ok::db::getIdFromResponse(*maybeResult2)};
 }
 
-std::tuple<std::string, int> ok::db::auth::login(const jsoncons::ojson &o)
+std::tuple<ErrorMsg, int> ok::db::auth::login(const jsoncons::ojson &o)
 {
     if (jsoncons::ObjectMemberIsObject(o, "body"))
     {
@@ -121,7 +121,7 @@ std::tuple<int, jsoncons::ojson> ok::db::auth::loginJwt(
     }
 }
 // wip
-std::tuple<std::string, std::string> ok::db::auth::change_password(
+std::tuple<ErrorMsg, std::string> ok::db::auth::change_password(
     VertexId const &memberKey,
     jsoncons::ojson const &o)
 {
@@ -181,13 +181,14 @@ std::tuple<std::string, std::string> ok::db::auth::change_password(
         return {"", "Success"};
 }
 
-std::tuple<std::string, jsoncons::ojson> ok::db::auth::user(int const memberKey)
+std::tuple<ErrorMsg, jsoncons::ojson> ok::db::auth::user(int const memberKey)
 {
     if (!memberKey)
         return {"Not Logged In", jsoncons::ojson::null()};
 
     ok::db::MGParams p{{"id", mg_value_make_integer(memberKey)}};
 
+    // TODO: can make generic function for this:
     std::string query{"MATCH (u) WHERE ID(u) = $id RETURN u;"};
     const auto [error, maybeResult] = mgCall(query, p);
     if (!error.empty())

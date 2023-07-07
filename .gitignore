@@ -564,3 +564,5 @@ FodyWeavers.xsd
 vcpkg/
 
 build/
+
+user_data/
