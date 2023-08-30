@@ -1,4 +1,5 @@
 #include "db/mgclientPool.hpp"
+#include <trantor/utils/Logger.h>
 #include "mgclient.hpp"
 namespace ok::db
 {
@@ -27,7 +28,12 @@ std::vector<std::string> getIdsFromResponse(
         {
             if (matchPart.type() == mg::Value::Type::Node)
             {
-                auto id = matchPart.ValueNode().properties().find("id");
+                auto properties = matchPart.ValueNode().properties();
+
+                auto id = properties.find("id");
+                if (id == properties.end()) {
+                    LOG_DEBUG << "Cant Find ID Name For: " << matchPart.ValueNode().id().AsInt();
+                }
                 auto [key, value] = *id;
                 collections.emplace_back(value.ValueString());
             }

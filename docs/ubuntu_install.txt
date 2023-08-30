@@ -26,7 +26,8 @@ install  on ubuntu server:
 - sh .\vcpkg\bootstrap-vcpkg.sh
 - cd vcpkg
 - vcpkg install drogon caf jsoncons date gtest cpp-jwt parallel-hashmap tsl-ordered-map boost abseil nghttp2
-- vcpkg install drogon caf jsoncons date gtest cpp-jwt
+- vcpkg install drogon C
+If drogon cant insall, install globally
 - cd ..
 - mkdir cmake-build-debug
 - cd cmake-build-debug

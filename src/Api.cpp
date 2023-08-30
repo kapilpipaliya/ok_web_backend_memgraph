@@ -26,10 +26,12 @@ using drogon::HttpResponsePtr;
 
 void registerApi()
 {
-    drogon::app().registerHandler("/api/upload", &file::upload, {drogon::Post});
+    drogon::app().registerHandler("/api/upload",
+                                  &file::upload,
+                                  {drogon::Post, drogon::Options});
     drogon::app().registerHandler("/api/download/{1}/{2}",
                                   &file::download,
-                                  {drogon::Get});
+                                  {drogon::Get, drogon::Options});
     /*drogon::app().registerHandler("/api/chat/drogon",
                                   [](RequestHandlerParams)
                                   {
@@ -365,6 +367,7 @@ std::tuple<ErrorMsg, std::vector<VertexId> > saveFiles(
 void upload(RequestHandlerParams)
 {
     auto session = impl::getSession(req);
+
     // token based authentication :
     // https://github.com/noris666/Meteor-Files-POST-Example/blob/master/avatars.example.js#L37
     // disabling member check, anyone can upload.

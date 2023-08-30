@@ -37,34 +37,34 @@ CAF_ADD_TYPE_ID(okproject, (std::vector<std::string>))
 CAF_ADD_TYPE_ID(okproject, (std::vector<VertexId>))
 CAF_ADD_TYPE_ID(okproject, (std::unordered_set<std::string>))
 
-using ws_connector_actor_int = caf::typed_actor<caf::reacts_to<drogon::WebSocketConnectionPtr, std::string, std::string>,
-                                                caf::replies_to<get_session_atom>::with<ok::smart_actor::connection::Session>,
-                                                caf::reacts_to<set_context_atom, ok::smart_actor::connection::Session>,
-                                                caf::reacts_to<std::string, drogon::WebSocketMessageType>,
-                                                caf::reacts_to<caf::forward_atom, jsoncons::ojson>,
-                                                caf::reacts_to<dispatch_atom, jsoncons::ojson>,
-                                                caf::reacts_to<conn_exit_atom>>;
+using ws_connector_actor_int = caf::typed_actor<caf::result<void>(drogon::WebSocketConnectionPtr, std::string, std::string),
+                                                caf::result<ok::smart_actor::connection::Session>(get_session_atom),
+                                                caf::result<void>(set_context_atom, ok::smart_actor::connection::Session),
+                                                caf::result<void>(std::string, drogon::WebSocketMessageType),
+                                                caf::result<void>(caf::forward_atom, jsoncons::ojson),
+                                                caf::result<void>(dispatch_atom, jsoncons::ojson),
+                                                caf::result<void>(conn_exit_atom)>;
 CAF_ADD_TYPE_ID(okproject, (ws_connector_actor_int))
 
-using main_actor_int = caf::typed_actor<caf::reacts_to<spawn_and_monitor_atom>,
-                                        caf::reacts_to<save_old_wsconnptr_atom, drogon::WebSocketConnectionPtr, std::string, std::string>,
-                                        caf::reacts_to<pass_to_ws_connection_atom, drogon::WebSocketConnectionPtr, std::string, drogon::WebSocketMessageType>,
-                                        caf::reacts_to<conn_exit_old_atom, drogon::WebSocketConnectionPtr>,
-                                        caf::reacts_to<shutdown_atom>>;
+using main_actor_int = caf::typed_actor<caf::result<void>(spawn_and_monitor_atom),
+                                        caf::result<void>(save_old_wsconnptr_atom, drogon::WebSocketConnectionPtr, std::string, std::string),
+                                        caf::result<void>(pass_to_ws_connection_atom, drogon::WebSocketConnectionPtr, std::string, drogon::WebSocketMessageType),
+                                        caf::result<void>(conn_exit_old_atom, drogon::WebSocketConnectionPtr),
+                                        caf::result<void>(shutdown_atom)>;
 CAF_ADD_TYPE_ID(okproject, (main_actor_int))
 
 using sync_actor_int = caf::typed_actor<
-    caf::reacts_to<caf::subscribe_atom, WsEvent, WsArguments, VertexId, ws_connector_actor_int>,
-    caf::reacts_to<create_atom, std::vector<VertexId>, std::vector<EdgeId>>,
-                                        caf::reacts_to<set_atom, std::vector<VertexId>, std::vector<EdgeId>>,
-                                        caf::reacts_to<remove_atom, std::vector<VertexId>, std::vector<EdgeId>>,
-                                        caf::reacts_to<conn_exit_atom, ws_connector_actor_int>,
-                                        caf::reacts_to<shutdown_atom>>;
+    caf::result<void>(caf::subscribe_atom, WsEvent, WsArguments, VertexId, ws_connector_actor_int),
+    caf::result<void>(create_atom, std::vector<VertexId>, std::vector<EdgeId>),
+                                        caf::result<void>(set_atom, std::vector<VertexId>, std::vector<EdgeId>),
+                                        caf::result<void>(remove_atom, std::vector<VertexId>, std::vector<EdgeId>),
+                                        caf::result<void>(conn_exit_atom, ws_connector_actor_int),
+    caf::result<void>(shutdown_atom)>;
 CAF_ADD_TYPE_ID(okproject, (sync_actor_int))
 
 using mutation_actor_int = caf::typed_actor<
-    caf::reacts_to<create_atom, VertexId, WsArguments, ws_connector_actor_int>,
-    caf::reacts_to<shutdown_atom>>;
+    caf::result<void>(create_atom, VertexId, WsArguments, ws_connector_actor_int),
+    caf::result<void>(shutdown_atom)>;
 CAF_ADD_TYPE_ID(okproject, (mutation_actor_int))
 
 CAF_END_TYPE_ID_BLOCK(okproject)
