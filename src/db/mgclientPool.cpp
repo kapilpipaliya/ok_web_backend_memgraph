@@ -18,7 +18,7 @@ int getIdFromResponse(std::vector<std::vector<mg::Value>> const &response)
     }
     return userId;
 }
-std::vector<std::string> getIdsFromResponse(
+std::vector<std::string> getNamesFromResponse(
     std::vector<std::vector<mg::Value>> const &response)
 {
     std::vector<std::string> collections{};
@@ -30,12 +30,13 @@ std::vector<std::string> getIdsFromResponse(
             {
                 auto properties = matchPart.ValueNode().properties();
 
-                auto id = properties.find("id");
+                auto id = properties.find("name");
                 if (id == properties.end()) {
-                    LOG_DEBUG << "Cant Find ID Name For: " << matchPart.ValueNode().id().AsInt();
+                    LOG_WARN << "Cant Find Name For: " << matchPart.ValueNode().id().AsInt();
+                } else {
+                    auto [key, value] = *id;
+                    collections.emplace_back(value.ValueString());
                 }
-                auto [key, value] = *id;
-                collections.emplace_back(value.ValueString());
             }
         }
     }

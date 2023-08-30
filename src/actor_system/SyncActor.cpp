@@ -191,8 +191,8 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
                                                       "CollAttrProp",
                                                       "Nav",
                                                       "NavAttr"};
-                    auto getIdsFromResponse = db::getIdsFromResponse(*response);
-                    for (auto &id : getIdsFromResponse)
+                    auto getNamesFromResponse = db::getNamesFromResponse(*response);
+                    for (auto &id : getNamesFromResponse)
                     {
                         labelVec.emplace_back(id);
                     }
