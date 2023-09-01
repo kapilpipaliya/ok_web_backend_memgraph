@@ -366,6 +366,29 @@ std::tuple<ErrorMsg, std::vector<VertexId> > saveFiles(
 }  // namespace impl
 void upload(RequestHandlerParams)
 {
+    // https://github.com/drogonframework/drogon/blob/e2e5d6d57f26b79bab83e87d1d3596d077925603/lib/src/HttpControllersRouter.cc#L740
+    if (req->method() == drogon::Options)
+    {
+        std::cout << "Setting Options" << std::endl;
+        auto resp = drogon::HttpResponse::newHttpResponse();
+        resp->setContentTypeCode(drogon::ContentType::CT_TEXT_PLAIN);
+        std::string methods = "OPTIONS,";
+        methods.append("POST,");
+        methods.resize(methods.length() - 1);
+        resp->addHeader("ALLOW", methods);
+//        auto &origin = req->getHeader("Origin");
+//        if (origin.empty())
+//        {
+            resp->addHeader("Access-Control-Allow-Origin", "*");
+//        }
+//        else
+//        {
+//            resp->addHeader("Access-Control-Allow-Origin", origin);
+//        }
+        resp->addHeader("Access-Control-Allow-Methods", methods);
+        callback(resp);
+        return;
+    }
     auto session = impl::getSession(req);
 
     // token based authentication :
