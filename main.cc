@@ -12,6 +12,10 @@ namespace
 void loadDrogonConfig(const std::string& file)
 {
     drogon::app().loadConfigFile(file);
+    drogon::app().registerPostHandlingAdvice([](const drogon::HttpRequestPtr &,
+                                        const drogon::HttpResponsePtr &resp) {
+        resp->addHeader("Access-Control-Allow-Origin", "*");
+    });
     std::vector<std::string> paths;
     paths.push_back(drogon::app().getDocumentRoot());
     ok::utils::file::assertDirectoryExist(paths);
