@@ -247,7 +247,7 @@ std::tuple<ErrorMsg, VertexId> saveFileToDatabase(
 {
     ok::db::MGParams p{{"md5", mg_value_make_string(file.getMd5().c_str())}};
 
-    std::string query{"MATCH (u:Upload {md5: $md5}) RETURN u;"};
+    std::string query{"MATCH (u:Media {md5: $md5}) RETURN u;"};
     const auto [error, maybeResult] = mgCall(query, p);
     if (!error.empty())
     {
@@ -267,7 +267,7 @@ std::tuple<ErrorMsg, VertexId> saveFileToDatabase(
          mg_value_make_integer(utils::time::getEpochMilliseconds())}};
 
     const auto [error2, maybeResult2] = mgCall(
-        "CREATE (c:User {name: $name, type: $type, md5: $md5, createdAt: "
+        "CREATE (c:Media {name: $name, type: $type, md5: $md5, createdAt: "
         "$createdAt}) return c;",
         p2);
     if (!error2.empty())
@@ -288,7 +288,7 @@ std::tuple<ErrorMsg, VertexId> saveTo(
     const std::string_view &fileContent,
     ok::smart_actor::connection::Session &session) noexcept
 {
-    auto fileName = file.getFileName() + trantor::Date::now().toCustomedFormattedString("%Y-%m-%d-%H%M%S");
+    auto fileName = trantor::Date::now().toCustomedFormattedString("%Y-%m-%d-%H%M%S") + "-" + file.getFileName();
     auto filePath = makePath(fileName, session);
     std::ofstream file_ofstream(filePath, std::ofstream::out);
     if (!file_ofstream)
