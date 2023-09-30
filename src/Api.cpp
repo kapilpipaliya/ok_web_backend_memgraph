@@ -5,6 +5,7 @@
 #include <filesystem>
 #include "jwt/jwt.hpp"
 #include "db/mgclientPool.hpp"
+#include "pystring.hpp"
 #include "utils/mg_helper.hpp"
 #include "utils/time_functions.hpp"
 
@@ -288,7 +289,8 @@ std::tuple<ErrorMsg, VertexId> saveTo(
     const std::string_view &fileContent,
     ok::smart_actor::connection::Session &session) noexcept
 {
-    auto fileName = trantor::Date::now().toCustomedFormattedString("%Y-%m-%d-%H%M%S") + "-" + file.getFileName();
+    auto f2 = pystring::replace(file.getFileName(), " ", "_");
+    auto fileName = trantor::Date::now().toCustomedFormattedString("%Y-%m-%d-%H%M%S") + "-" + f2;
     auto filePath = makePath(fileName, session);
     std::ofstream file_ofstream(filePath, std::ofstream::out);
     if (!file_ofstream)
