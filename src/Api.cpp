@@ -180,9 +180,19 @@ void sendFailure(
     auto resp = drogon::HttpResponse::newHttpJsonResponse(json);
     callback(resp);
 }
+//https://stackoverflow.com/questions/4654636/how-to-determine-if-a-string-is-a-number-with-c
+bool is_number(const std::string& s)
+{
+    return !s.empty() && std::find_if(s.begin(),
+                                      s.end(), [](unsigned char c) { return !std::isdigit(c); }) == s.end();
+}
 std::string getFileName(std::string const &key,
                         ok::smart_actor::connection::Session &session) noexcept
 {
+
+    if(!is_number(key))    {
+        return "";
+    }
     ok::db::MGParams p{{"id", mg_value_make_integer(std::stoi(key))}};
 
     // TODO: can make generic function for this:
