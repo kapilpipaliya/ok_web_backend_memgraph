@@ -62,7 +62,7 @@ namespace file
 // todo check permission
 void upload(drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpResponsePtr const &)> &&callback);
 // todo check permissions
-void download(drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpResponsePtr const &)> &&callback, int version, std::string const &key);
+void download(drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpResponsePtr const &)> &&callback, int version, std::string const &key, std::string const &name);
 namespace impl
 {
 ok::smart_actor::connection::Session getSession(drogon::HttpRequestPtr const &req);

@@ -29,7 +29,7 @@ void registerApi()
     drogon::app().registerHandler("/api/upload",
                                   &file::upload,
                                   {drogon::Post, drogon::Options});
-    drogon::app().registerHandler("/api/download/{1}/{2}",
+    drogon::app().registerHandler("/api/download/{1}/{2}/{3}",
                                   &file::download,
                                   {drogon::Get, drogon::Options});
     /*drogon::app().registerHandler("/api/chat/drogon",
@@ -123,7 +123,7 @@ void registerRegexApi()
     */
 
     drogon::app().registerHandlerViaRegex(
-        "/admin(.*)",
+        "/(.*)",
         [](drogon::HttpRequestPtr const &req,
            std::function<void(drogon::HttpResponsePtr const &)> &&callback,
            std::string &&urlPart) {
@@ -288,7 +288,7 @@ std::tuple<ErrorMsg, VertexId> saveTo(
     const std::string_view &fileContent,
     ok::smart_actor::connection::Session &session) noexcept
 {
-    auto fileName = drogon::utils::getUuid() + "_" + file.getFileName();
+    auto fileName = file.getFileName() + trantor::Date::now().toCustomedFormattedString("%Y-%m-%d-%H%M%S");
     auto filePath = makePath(fileName, session);
     std::ofstream file_ofstream(filePath, std::ofstream::out);
     if (!file_ofstream)
@@ -412,7 +412,7 @@ void upload(RequestHandlerParams)
 void download(drogon::HttpRequestPtr const &req,
               std::function<void(drogon::HttpResponsePtr const &)> &&callback,
               int version,
-              std::string const &key)
+              std::string const &key, std::string const &name)
 {
     auto session = impl::getSession(req);
     // disabling member check, anyone can upload.
