@@ -69,7 +69,7 @@ ok::smart_actor::connection::Session getSession(drogon::HttpRequestPtr const &re
 bool initializeUser(ok::smart_actor::connection::Session &session) noexcept;
 bool isPermissionsOk() noexcept;
 // Fix this
-void sendSuccess(std::vector<VertexId> const &savedKeys, std::function<void(drogon::HttpResponsePtr const &)> &callback) noexcept;
+void sendSuccess(const jsoncons::ojson &savedKeys, std::function<void(drogon::HttpResponsePtr const &)> &callback) noexcept;
 void sendFailure( ErrorMsg const &error, std::function<void(drogon::HttpResponsePtr const &)> &callback) noexcept;
 }  // namespace impl
 }  // namespace file
