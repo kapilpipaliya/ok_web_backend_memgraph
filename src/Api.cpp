@@ -213,8 +213,9 @@ std::string getFileName(std::string const &key,
         if (maybeResult.value().size() > 0)
         {
             auto j = convertNodeToJson(maybeResult.value()[0][0].ValueNode());
-            LOG_DEBUG << j.to_string();
-            return j["P"]["name"].as_string();
+            if (j.contains("P") && j["P"].contains("name")) {
+                return j["P"]["name"].as_string();
+            }
         }
         else
             return "";
