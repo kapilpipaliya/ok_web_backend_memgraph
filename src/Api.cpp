@@ -427,7 +427,7 @@ void upload(RequestHandlerParams)
         }
         ok::db::MGParams p1{{"ids", mg_value_make_list(idList)}};
         auto [error, response] = db::mgCall(
-            getAllNodesWithALabel("Media", "WHERE any(x in $ids WHERE x = ID(s))"), p1);
+            getAllNodesWithALabel("Media", "WHERE any(x in $ids WHERE x = ID(n))"), p1);
         if (!error.empty())
         {
             impl::sendFailure(error, callback);
