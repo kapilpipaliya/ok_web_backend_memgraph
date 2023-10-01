@@ -6,6 +6,7 @@
 #include "jwt/jwt.hpp"
 #include "db/mgclientPool.hpp"
 #include "pystring.hpp"
+#include "third_party/mgclient/src/mgvalue.h"
 #include "utils/mg_helper.hpp"
 #include "utils/time_functions.hpp"
 
@@ -159,7 +160,7 @@ bool isPermissionsOk() noexcept
 }
 
 void sendSuccess(
-    std::vector<VertexId> const &savedKeys,
+    jsoncons::ojson const &savedKeys,
     std::function<void(drogon::HttpResponsePtr const &)> &callback) noexcept
 {
     jsoncons::ojson j;
@@ -418,6 +419,21 @@ void upload(RequestHandlerParams)
     }
     else
     {
+        mg_list *idList = mg_list_make_empty(savedKeys.size());
+        for (auto const &v : savedKeys)
+        {
+            mg_list_append(idList,
+                           mg_value_make_integer(v));
+        }
+        ok::db::MGParams p1{{"ids", mg_value_make_list(idList)}};
+        auto [error, response] = db::mgCall(
+            getAllNodesWithALabel("Media", "WHERE any(x in $ids WHERE x = ID(s))"), p1);
+        if (!error.empty())
+        {
+            impl::sendFailure(error, callback);
+            return;
+        }
+
         impl::sendSuccess(savedKeys, callback);
     }
 }
