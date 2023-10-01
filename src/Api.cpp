@@ -434,6 +434,23 @@ void upload(RequestHandlerParams)
             return;
         }
 
+        try
+        {
+            jsoncons::ojson result = jsoncons::ojson::array();
+            if (response)
+                for (auto &row : *response)
+                    for (auto &matchPart : row)
+                        if (matchPart.type() == mg::Value::Type::Node)
+                            result.push_back(convertNodeToJson(
+                                matchPart.ValueNode()));
+            impl::sendSuccess(result, callback);
+        }
+        catch (mg::ClientException e)
+        {
+            impl::sendFailure(e.what(), callback);
+
+        }
+
         impl::sendSuccess(savedKeys, callback);
     }
 }
