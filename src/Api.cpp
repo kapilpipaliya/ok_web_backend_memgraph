@@ -66,7 +66,8 @@ void registerApi()
   reason); }
                                   },
                                   {drogon::Get});*/
-    drogon::app().registerHandler(
+    // redirect / route to /web
+    /*drogon::app().registerHandler(
         "/",
         [](drogon::HttpRequestPtr const &,
            std::function<void(drogon::HttpResponsePtr const &)> &&cb) {
@@ -74,7 +75,7 @@ void registerApi()
                 "/web", drogon::k301MovedPermanently);
             cb(res);
         },
-        {drogon::Get});
+        {drogon::Get});*/
 }
 void registerRegexApi()
 {
