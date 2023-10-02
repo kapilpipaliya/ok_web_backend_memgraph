@@ -126,7 +126,7 @@ void registerRegexApi()
     */
 
     drogon::app().registerHandlerViaRegex(
-        "^/(?!assets).*",
+        "^/(?!assets)(.*)",
         [](drogon::HttpRequestPtr const &req,
            std::function<void(drogon::HttpResponsePtr const &)> &&callback,
            std::string &&urlPart) {
