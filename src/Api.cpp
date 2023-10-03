@@ -257,11 +257,12 @@ std::string fileTypeToString(drogon::FileType const &fileType)
 std::tuple<ErrorMsg, VertexId> saveFileToDatabase(
     drogon::HttpFile const &file,
     std::string const &fileName,
-    ok::smart_actor::connection::Session &session) noexcept
+    ok::smart_actor::connection::Session &session, bool isTemp) noexcept
 {
     ok::db::MGParams p{{"md5", mg_value_make_string(file.getMd5().c_str())}};
 
-    std::string query{"MATCH (u:Media {md5: $md5}) RETURN u;"};
+//    std::string query{"MATCH (u:Media {md5: $md5}) RETURN u;"};
+    std::string query{"MATCH (n) WHERE (n:Media OR n:Temp) AND n.md5 = $md5 RETURN n"};
     const auto [error, maybeResult] = mgCall(query, p);
     if (!error.empty())
     {
@@ -281,7 +282,7 @@ std::tuple<ErrorMsg, VertexId> saveFileToDatabase(
          mg_value_make_integer(utils::time::getEpochMilliseconds())}};
 
     const auto [error2, maybeResult2] = mgCall(
-        "CREATE (c:Media {name: $name, type: $type, md5: $md5, createdAt: "
+        std::string{"CREATE (c:"} + (isTemp ? "Temp" : "Media") +  " {name: $name, type: $type, md5: $md5, createdAt: "
         "$createdAt}) return c;",
         p2);
     if (!error2.empty())
@@ -300,7 +301,7 @@ std::tuple<ErrorMsg, VertexId> saveFileToDatabase(
 std::tuple<ErrorMsg, VertexId> saveTo(
     drogon::HttpFile const &file,
     const std::string_view &fileContent,
-    ok::smart_actor::connection::Session &session) noexcept
+    ok::smart_actor::connection::Session &session, bool isTemp) noexcept
 {
     auto f2 = pystring::replace(file.getFileName(), " ", "_");
     auto fileName = trantor::Date::now().toCustomedFormattedString("%Y-%m-%d-%H%M%S") + "-" + f2;
@@ -316,7 +317,7 @@ std::tuple<ErrorMsg, VertexId> saveTo(
     {
         file_ofstream << fileContent;
         file_ofstream.close();
-        auto [er, key] = saveFileToDatabase(file, fileName, session);
+        auto [er, key] = saveFileToDatabase(file, fileName, session, isTemp);
         saveThumbnails(fileName);
         LOG_DEBUG << "save uploaded file:" << fileName << " path: " << filePath;
         return {er, key};
@@ -354,6 +355,8 @@ std::tuple<ErrorMsg, std::vector<VertexId> > saveFiles(
     if (pos2 == std::string::npos)
         pos2 = contentType.size();
 
+    const std::string &isTemp = req->getHeader("temp");
+
     drogon::MultiPartParser fileUpload;
     if (fileUpload.parse(req) != -1)
     {
@@ -363,7 +366,7 @@ std::tuple<ErrorMsg, std::vector<VertexId> > saveFiles(
         std::vector<VertexId> savedKeys;
         for (auto const &file : files)
         {
-            if (auto [er, key] = saveTo(file, file.fileContent(), session);
+            if (auto [er, key] = saveTo(file, file.fileContent(), session, !isTemp.empty());
                 key > -1)
             {
                 savedKeys.push_back(key);
@@ -429,7 +432,7 @@ void upload(RequestHandlerParams)
         }
         ok::db::MGParams p1{{"ids", mg_value_make_list(idList)}};
         auto [error, response] = db::mgCall(
-            getAllNodesWithALabel("Media", "WHERE any(x in $ids WHERE x = ID(n))"), p1);
+            "MATCH (n) WHERE any(x in $ids WHERE x = ID(n))", p1);
         if (!error.empty())
         {
             impl::sendFailure(error, callback);
