@@ -156,7 +156,9 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
                                       relationships,
                                       self->state.connPtr);
             }
-            else if (memberKey != -1)
+            // disable auth temparary
+            //else if (memberKey != -1)
+            else if (true)
             {
                 // temporary sending all data to logged in member:
                 ok::db::MGParams p{};
