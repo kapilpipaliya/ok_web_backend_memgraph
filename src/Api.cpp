@@ -133,7 +133,7 @@ void registerRegexApi()
            std::string &&urlPart) {
             Json::Value result;
             auto resp = drogon::HttpResponse::newFileResponse(
-                "/home/k/admin/dist/index.html");
+                "/home/k/admin/distadmin/index.html");
             callback(resp);
         },
 
@@ -147,7 +147,7 @@ void registerRegexApi()
            std::string &&urlPart) {
             Json::Value result;
             auto resp = drogon::HttpResponse::newFileResponse(
-                "/home/k/web/dist/index.html");
+                "/home/k/web/distweb/index.html");
             callback(resp);
         },
 
