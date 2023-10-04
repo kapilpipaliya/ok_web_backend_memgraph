@@ -188,7 +188,7 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
                                   self->state.connPtr);
 
 
-                    std::vector<std::string> labelType{"CompProp", "CompEvent", "CompPropDataType", "CompPropComp"};
+                    std::vector<std::string> labelType{"CompProp", "CompEvent", "CompPropDataType", "CompPropComp", "CompCategoryComp"};
                     mg_list *typeList = mg_list_make_empty(labelType.size());
                     for (auto const &v : labelType)
                     {
