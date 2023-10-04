@@ -173,7 +173,7 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
 
 
                 if (!args.contains("admin")) {
-                    std::vector<std::string> labelVec{"Comp", "CompProp", "CompEvent"};
+                    std::vector<std::string> labelVec{"CompProp", "CompEvent"};
                     mg_list *labelList = mg_list_make_empty(labelVec.size());
                     for (auto const &v : labelVec)
                     {
@@ -188,7 +188,7 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
                                   self->state.connPtr);
 
 
-                    std::vector<std::string> labelType{"CompProp", "CompEvent", "CompPropDataType", "CompPropComp", "CompCategoryComp"};
+                    std::vector<std::string> labelType{"CompProp", "CompEvent", "CompPropDataType", "CompPropComp"};
                     mg_list *typeList = mg_list_make_empty(labelType.size());
                     for (auto const &v : labelType)
                     {
@@ -205,11 +205,11 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
 
                     // send View Components:
                     // get view compnents
-                    ok::db::MGParams p0{};
-                    fetchNodesAPI("MATCH (ca:CompCategory {name: 'View'})-[]->(n:Comp) return DISTINCT n;",
-                                  p0,
-                                  nodes,
-                                  self->state.connPtr);
+//                    ok::db::MGParams p0{};
+//                    fetchNodesAPI("MATCH (ca:CompCategory {name: 'View'})-[]->(n:Comp) return DISTINCT n;",
+//                                  p0,
+//                                  nodes,
+//                                  self->state.connPtr);
 
                     // get view compnents properties
                     ok::db::MGParams p01{};
