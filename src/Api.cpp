@@ -126,13 +126,26 @@ void registerRegexApi()
     */
 
     drogon::app().registerHandlerViaRegex(
-        "^/(?!assets)(.*)",
+        "^(.*)/admin/(.*)",
         [](drogon::HttpRequestPtr const &req,
            std::function<void(drogon::HttpResponsePtr const &)> &&callback,
            std::string &&urlPart) {
             Json::Value result;
             auto resp = drogon::HttpResponse::newFileResponse(
                 "/home/k/admin/dist/index.html");
+            callback(resp);
+        },
+
+        {drogon::Get});
+
+    drogon::app().registerHandlerViaRegex(
+        "^/(?!assets)(.*)",
+        [](drogon::HttpRequestPtr const &req,
+           std::function<void(drogon::HttpResponsePtr const &)> &&callback,
+           std::string &&urlPart) {
+            Json::Value result;
+            auto resp = drogon::HttpResponse::newFileResponse(
+                "/home/k/web/dist/index.html");
             callback(resp);
         },
 

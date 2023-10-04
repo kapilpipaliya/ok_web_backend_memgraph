@@ -161,16 +161,89 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
             else if (true)
             {
                 // temporary sending all data to logged in member:
-                ok::db::MGParams p{};
-                fetchNodesAPI("MATCH (n) RETURN n;",
-                              p,
-                              nodes,
-                              self->state.connPtr);
-                ok::db::MGParams p1{};
-                fetchRelationshipsAPI("MATCH ()-[r]->() RETURN r;",
-                                      p1,
-                                      relationships,
-                                      self->state.connPtr);
+
+                // get web component category id
+                // MATCH (c:CompCategory) WHERE c.name = 'View' return c
+
+                // get all web components nodes.
+                // MATCH (c:Comp)-[]->(p) RETURN c, p
+
+                // get all web components edges.
+                // MATCH (c:Comp)-[cp]->()-[cp2]->() RETURN cp, cp2
+
+
+                if (!args.contains("admin")) {
+                    std::vector<std::string> labelVec{"Comp", "CompProp", "CompEvent"};
+                    mg_list *labelList = mg_list_make_empty(labelVec.size());
+                    for (auto const &v : labelVec)
+                    {
+                        mg_list_append(labelList,
+                                       mg_value_make_string(v.c_str()));
+                    }
+                    ok::db::MGParams p{{"labels", mg_value_make_list(labelList)}};
+
+                    fetchNodesAPI("MATCH (n) WHERE NOT all(l IN LABELS(n) WHERE l IN $labels) RETURN n;",
+                                  p,
+                                  nodes,
+                                  self->state.connPtr);
+
+
+                    std::vector<std::string> labelType{"CompProp", "CompEvent", "CompPropDataType", "CompPropComp"};
+                    mg_list *typeList = mg_list_make_empty(labelType.size());
+                    for (auto const &v : labelType)
+                    {
+                        mg_list_append(typeList,
+                                       mg_value_make_string(v.c_str()));
+                    }
+                    ok::db::MGParams p1{{"types", mg_value_make_list(typeList)}};
+
+                    fetchRelationshipsAPI("MATCH  ()-[r]->() WHERE NOT type(r) in $types RETURN r;",
+                                          p1,
+                                          relationships,
+                                          self->state.connPtr);
+
+
+                    // send View Components:
+                    // get view compnents
+                    ok::db::MGParams p0{};
+                    fetchNodesAPI("MATCH (ca:CompCategory {name: 'View'})-[]->(n:Comp) return DISTINCT n;",
+                                  p0,
+                                  nodes,
+                                  self->state.connPtr);
+
+                    // get view compnents properties
+                    ok::db::MGParams p01{};
+                    fetchNodesAPI("MATCH (ca:CompCategory {name: 'View'})-[]->(:Comp)-[]->(n) return DISTINCT n;",
+                                  p01,
+                                  nodes,
+                                  self->state.connPtr);
+
+
+                    ok::db::MGParams p02{};
+                    fetchRelationshipsAPI("MATCH (ca:CompCategory {name: 'View'})-[]->(:Comp)-[r]->() return DISTINCT r;",
+                                          p02,
+                                          relationships,
+                                          self->state.connPtr);
+                    ok::db::MGParams p03{};
+                    fetchRelationshipsAPI("MATCH (ca:CompCategory {name: 'View'})-[]->(:Comp)-[]->()-[r]->() return DISTINCT r;",
+                                          p03,
+                                          relationships,
+                                          self->state.connPtr);
+
+
+
+                } else {
+                    ok::db::MGParams p{};
+                    fetchNodesAPI("MATCH (n) RETURN n;",
+                                  p,
+                                  nodes,
+                                  self->state.connPtr);
+                    ok::db::MGParams p1{};
+                    fetchRelationshipsAPI("MATCH ()-[r]->() RETURN r;",
+                                          p1,
+                                          relationships,
+                                          self->state.connPtr);
+                }
             }
             else
             {
@@ -205,14 +278,14 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
                         mg_list_append(labelList,
                                        mg_value_make_string(v.c_str()));
                     }
-                    ok::db::MGParams p1{{"ids", mg_value_make_list(labelList)}};
+                    ok::db::MGParams p1{{"labels", mg_value_make_list(labelList)}};
                     std::string labels{};
                     for (auto &id : labelVec)
                     {
                         labels += ":" + id;
                     }
                     fetchNodesAPI(
-                        "MATCH (n) WHERE all(k IN LABELS(n) WHERE k IN $ids) "
+                        "MATCH (n) WHERE all(l IN LABELS(n) WHERE l IN $labels) "
                         "RETURN n;",
                         p1,
                         nodes,
@@ -220,8 +293,8 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
 
                     fetchRelationshipsAPI(
                         "MATCH (n)-[r]->(m) "
-                        "WHERE all(k IN LABELS(n) WHERE k IN $ids) AND "
-                        "all(k IN LABELS(m) WHERE k IN $ids) "
+                        "WHERE all(l IN LABELS(n) WHERE l IN $labels) AND "
+                        "all(l IN LABELS(m) WHERE l IN $labels) "
                         "RETURN r;",
                         p1,
                         relationships,
