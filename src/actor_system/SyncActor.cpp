@@ -188,7 +188,7 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
                                   self->state.connPtr);
 
 
-                    std::vector<std::string> labelType{"CompProp", "CompEvent", "CompPropDataType", "CompPropComp"};
+                    std::vector<std::string> labelType{"CompProp", "CompEvent", "CompPropDataType", "CompPropComp", "AttrPropName"};
                     mg_list *typeList = mg_list_make_empty(labelType.size());
                     for (auto const &v : labelType)
                     {
@@ -227,6 +227,11 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
                     ok::db::MGParams p03{};
                     fetchRelationshipsAPI("MATCH (ca:CompCategory {name: 'View'})-[]->(:Comp)-[]->()-[r]->() return DISTINCT r;",
                                           p03,
+                                          relationships,
+                                          self->state.connPtr);
+                    ok::db::MGParams p04{};
+                    fetchRelationshipsAPI("MATCH (ca:CompCategory {name: 'View'})-[]->(:Comp)-[]->()<-[r]-() return DISTINCT r;",
+                                          p04,
                                           relationships,
                                           self->state.connPtr);
 
