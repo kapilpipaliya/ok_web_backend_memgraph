@@ -125,8 +125,9 @@ void registerRegexApi()
     drogon::Put, drogon::Options, drogon::Head, drogon::Delete});
     */
 
+    // all admin route forward to admin page
     drogon::app().registerHandlerViaRegex(
-        "^(.*)/admin/(.*)",
+        "^(?!assets|web_assets)(.*)/admin/(.*)",
         [](drogon::HttpRequestPtr const &req,
            std::function<void(drogon::HttpResponsePtr const &)> &&callback,
            std::string &&urlPart) {
@@ -138,8 +139,9 @@ void registerRegexApi()
 
         {drogon::Get});
 
+    // alll route forward to web
     drogon::app().registerHandlerViaRegex(
-        "^/(?!assets)(.*)",
+        "^/(?!assets|web_assets)(.*)",
         [](drogon::HttpRequestPtr const &req,
            std::function<void(drogon::HttpResponsePtr const &)> &&callback,
            std::string &&urlPart) {
