@@ -131,6 +131,9 @@ void registerRegexApi()
         [](drogon::HttpRequestPtr const &req,
            std::function<void(drogon::HttpResponsePtr const &)> &&callback,
            std::string &&urlPart) {
+            if (urlPart == "favicon.ico") {
+                //TODO
+            }
             Json::Value result;
             auto resp = drogon::HttpResponse::newFileResponse(
                 "/home/k/admin/distadmin/index.html");
@@ -145,6 +148,9 @@ void registerRegexApi()
         [](drogon::HttpRequestPtr const &req,
            std::function<void(drogon::HttpResponsePtr const &)> &&callback,
            std::string &&urlPart) {
+            if (urlPart == "favicon.ico") {
+                //TODO
+            }
             Json::Value result;
             auto resp = drogon::HttpResponse::newFileResponse(
                 "/home/k/web/distweb/index.html");

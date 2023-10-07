@@ -180,7 +180,40 @@ std::tuple<ErrorMsg, std::string> ok::db::auth::change_password(
     else
         return {"", "Success"};
 }
+namespace {
+jsoncons::ojson getRolesOfUser(int const &memberKey){
+    if (!memberKey)
+        return jsoncons::ojson::null();
 
+    ok::db::MGParams p{{"id", mg_value_make_integer(memberKey)}};
+
+    std::string query{"MATCH (c:User)-[r:UserRole]->(n) return COLLECT(DISTINCT id(n));"};
+    const auto [error, maybeResult] = mgCall(query, p);
+    if (!error.empty())
+    {
+        return jsoncons::ojson::null();
+    }
+    if (ok::db::getIdFromResponse(*maybeResult) == -1)
+    {
+        return jsoncons::ojson::null();
+    }
+    if (maybeResult)
+    {
+        if (maybeResult.value().size() > 0)
+        {
+            jsoncons::ojson roleIds = jsoncons::ojson::array();
+            for (auto &row : *maybeResult)
+                for (auto &matchPart : row)
+                    if (matchPart.type() == mg::Value::Type::List)
+                        roleIds = convertListToJson(matchPart.ValueList());
+            return roleIds;
+        }
+        else
+            return jsoncons::ojson::null();
+    }
+    return jsoncons::ojson::null();
+}
+}
 std::tuple<ErrorMsg, jsoncons::ojson> ok::db::auth::user(int const memberKey)
 {
     if (!memberKey)
@@ -206,6 +239,7 @@ std::tuple<ErrorMsg, jsoncons::ojson> ok::db::auth::user(int const memberKey)
         {
             auto j = convertNodeToJson(maybeResult.value()[0][0].ValueNode());
             j["P"].erase("pass");
+            j["P"]["roles"] = getRolesOfUser(memberKey);
             return {"", j};
         }
         else
