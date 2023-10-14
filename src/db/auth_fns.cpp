@@ -187,13 +187,9 @@ jsoncons::ojson getRolesOfUser(int const &memberKey){
 
     ok::db::MGParams p{{"id", mg_value_make_integer(memberKey)}};
 
-    std::string query{"MATCH (c:User)-[r:UserRole]->(n) return COLLECT(DISTINCT id(n));"};
+    std::string query{"MATCH (c:User)-[r:UserRole]->(n)  WHERE ID(c) = $id return COLLECT(DISTINCT id(n));"};
     const auto [error, maybeResult] = mgCall(query, p);
     if (!error.empty())
-    {
-        return jsoncons::ojson::null();
-    }
-    if (ok::db::getIdFromResponse(*maybeResult) == -1)
     {
         return jsoncons::ojson::null();
     }
@@ -211,6 +207,7 @@ jsoncons::ojson getRolesOfUser(int const &memberKey){
         else
             return jsoncons::ojson::null();
     }
+    LOG_DEBUG << "hji6";
     return jsoncons::ojson::null();
 }
 }
