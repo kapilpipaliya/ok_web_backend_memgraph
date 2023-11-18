@@ -91,6 +91,6 @@ install lldb
 run lldb:
  lldb -- /home/k/../backend ../server.config 1402 1401
 type 'run' to start the application
-type 'frame select 9' to select frame
+type 'frame select 9' to select frame (in gdb its select-frame 9)
 use this commands to debug:
 https://lldb.llvm.org/use/tutorial.html

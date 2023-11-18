@@ -119,9 +119,10 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
     auto client = mg::Client::Connect(self->state.params);
     if (!client)
     {
-        LOG_DEBUG << "Failed to connect MG Server";
+        LOG_DEBUG << "Failed to connect MG Server. Host=" << self->state.params.host << " Port=" << self->state.params.port;
+    } else {
+        self->state.connPtr = std::move(client);
     }
-    self->state.connPtr = std::move(client);
 
     return {
         [=](caf::subscribe_atom,
@@ -138,6 +139,10 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
             jsoncons::ojson nodes = jsoncons::ojson::array();
             jsoncons::ojson relationships = jsoncons::ojson::array();
 
+            if (!self->state.connPtr && !reconnect(self->state.connPtr)) {
+                LOG_DEBUG << "Failed to connect MG Server. Host=" << self->state.params.host << " Port=" << self->state.params.port;
+                return;
+            }
             // 1. get all coll nodes.
             // 2. if no memberKey send all public nodes and relationships.
             // 3. if memberKey send data that user is allowed to see.
@@ -408,7 +413,7 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
         }};
 }
 
-void reconnect(syncActorState::DbConnectionPtr &connPtr)
+bool reconnect(syncActorState::DbConnectionPtr &connPtr)
 {
     connPtr->Finalize();
     mg::Client::Params params;
@@ -419,11 +424,12 @@ void reconnect(syncActorState::DbConnectionPtr &connPtr)
     connPtr = std::move(client);
     if (connPtr)
     {
+        return true;
     }
     else
     {
         LOG_DEBUG << "Failed to connect!";
-        return;
+        return false;
     }
 }
 

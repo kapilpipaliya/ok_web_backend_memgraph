@@ -86,7 +86,7 @@
       "log_size_limit": 100000000,
       //log_level: "DEBUG" by default,options:"TRACE","DEBUG","INFO","WARN"
       //The TRACE level is only valid when built in DEBUG mode.
-      "log_level": "DEBUG"
+      "log_level": "TRACE"
     },
     //run_as_daemon: False by default
     "run_as_daemon": false,
@@ -129,10 +129,10 @@
     "br_static": true,
     //client_max_body_size: Set the max body size of HTTP requests received by drogon. The default value is "1M".
     //One can set it to "1024", "1k", "10M", "1G", etc. Setting it to "" means no limit.
-    "client_max_body_size": "10M",
+    "client_max_body_size": "",
     //client_max_websocket_message_size: Set the max size of messages sent by WebSocket client. The default value is "128K".
     //One can set it to "1024", "1k", "10M", "1G", etc. Setting it to "" means no limit.
-    "client_max_websocket_message_size": "1G"
+    "client_max_websocket_message_size": ""
   },
   "plugins": [
     {

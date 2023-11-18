@@ -3,7 +3,7 @@
     "cert": "/root/.acme.sh/o-k.tech/o-k.tech.cer",
     "key": "/root/.acme.sh/o-k.tech/o-k.tech.key"
   },
-  "listeners": [
+  //"listeners": [
     //{
     //  "address": "0.0.0.0",
     //  "port": 8500,
@@ -16,7 +16,7 @@
     //   "cert": "",
     //   "key": ""
     // }
-  ],
+  //],
   "app": {
     "threads_num": 0,
     "enable_session": false,
