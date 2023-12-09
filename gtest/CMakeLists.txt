@@ -28,7 +28,7 @@ target_link_libraries(
   Drogon::Drogon
   mgclient-static
 )
-target_link_libraries(hello_test  CAF::io CAF::core CAF::test CAF::openssl)
+target_link_libraries(hello_test  CAF::io CAF::core CAF::openssl)
 
 
 

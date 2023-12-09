@@ -3,8 +3,8 @@ https://tecadmin.net/install-development-tools-on-ubuntu/
 - sudo apt update
 - sudo apt install build-essential
 - sudo apt-get install pkg-config
-- sudo apt install autoconf automake gdb git libffi-dev zlib1g-dev libssl-dev
-- sudo apt install git make cmake clang gsasl libgsasl7-dev gnutls-bin libgnutls28-dev libssl-dev
+- sudo apt install autoconf automake gdb make cmake clang libffi-dev zlib1g-dev libssl-dev
+- sudo apt install git gsasl libgsasl7-dev gnutls-bin libgnutls28-dev libssl-dev
 
 install  on ubuntu server:
 1.install vmime:

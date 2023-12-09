@@ -26,7 +26,8 @@ endif ()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_executable(${PROJECT_NAME} main.cc)
+add_executable(${PROJECT_NAME} main.cc
+    docs/ubuntu.sh)
 
 # ##############################################################################
 # If you include the drogon source code locally in your project, use this method
@@ -41,7 +42,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon)
 find_package(CAF CONFIG REQUIRED)
 # tried everything to load --logger.console.verbosity=trace --verbosity=trace from command line argument but not working.
 add_definitions(-DCAF_LOG_LEVEL=15)
-target_link_libraries(${PROJECT_NAME} PRIVATE CAF::io CAF::core CAF::test CAF::openssl)
+target_link_libraries(${PROJECT_NAME} PRIVATE CAF::io CAF::core CAF::openssl)
 
 find_package(jsoncons CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE jsoncons)
@@ -99,9 +100,9 @@ aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src MAIN_SRC)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/pystring UTILS_SRC)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/pystring)
 
-
-drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views
-                    ${CMAKE_CURRENT_BINARY_DIR})
+# we are not using drogon_views
+#drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views
+#                    ${CMAKE_CURRENT_BINARY_DIR})
 # use the following line to create views with namespaces.
 # drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views
 #                     ${CMAKE_CURRENT_BINARY_DIR} TRUE)
