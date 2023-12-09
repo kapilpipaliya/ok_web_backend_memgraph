@@ -57,9 +57,17 @@
     ],
     "locations": [
       {
-        "uri_prefix": "/.well-known/acme-challenge/",
+        "uri_prefix": "/assets_web",
         "default_content_type": "text/plain",
-        "alias": "",
+        "alias": "$HOME/ok_web_frontend_global/distweb/assets_web",
+        "is_case_sensitive": false,
+        "allow_all": true,
+        "is_recursive": true
+      },
+      {
+        "uri_prefix": "/assets",
+        "default_content_type": "text/plain",
+        "alias": "$HOME/ok_web_frontend_global/distadmin/assets",
         "is_case_sensitive": false,
         "allow_all": true,
         "is_recursive": true
