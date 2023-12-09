@@ -136,7 +136,7 @@ void registerRegexApi()
             }
             Json::Value result;
             auto resp = drogon::HttpResponse::newFileResponse(
-                std::getenv("HOME") + std::string{"/admin/distadmin/index.html"});
+                std::getenv("HOME") + std::string{"/potal/distadmin/index.html"});
             callback(resp);
         },
 
@@ -153,7 +153,7 @@ void registerRegexApi()
             }
             Json::Value result;
             auto resp = drogon::HttpResponse::newFileResponse(
-                std::getenv("HOME") + std::string{"/web/distweb/index.html"});
+                std::getenv("HOME") + std::string{"/potal/distweb/index.html"});
             callback(resp);
         },
 
