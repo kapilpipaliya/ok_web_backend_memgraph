@@ -102,13 +102,13 @@ std::string isProperEdgeFormat(jsoncons::ojson edge)
 mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
 {
     self->set_error_handler([](caf::error &err) {
-        LOG_DEBUG << "Mutation Actor Error :";
-        LOG_DEBUG << ok::smart_actor::supervisor::getReasonString(err);
+        LOG_ERROR << "Mutation Actor Error :";
+        LOG_ERROR << ok::smart_actor::supervisor::getReasonString(err);
     });
     self->set_down_handler([](caf::scheduled_actor *act,
                               caf::down_msg &msg) noexcept {
-        LOG_DEBUG << "Monitored Actor Error Down Error :" << act->name();
-        LOG_DEBUG << ok::smart_actor::supervisor::getReasonString(msg.reason);
+        LOG_ERROR << "Monitored Actor Error Down Error :" << act->name();
+        LOG_ERROR << ok::smart_actor::supervisor::getReasonString(msg.reason);
     });
     // If self exception error occur: server freeze.
     self->set_exception_handler(
@@ -123,7 +123,7 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
             }
             catch (std::exception const &e)
             {
-                LOG_DEBUG << "Muration Actor Exception Error : " << e.what();
+                LOG_ERROR << "Muration Actor Exception Error : " << e.what();
             }
             return caf::make_error(
                 caf::pec::success);  // self will not resume actor.
@@ -131,8 +131,8 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
     self->set_default_handler(
         [](caf::scheduled_actor *ptr,
            caf::message &x) noexcept -> caf::skippable_result {
-            LOG_DEBUG << "unexpected message, I will Quit";
-            LOG_DEBUG << "*** unexpected message [id: " << ptr->id()
+            LOG_ERROR << "unexpected message, I will Quit";
+            LOG_ERROR << "*** unexpected message [id: " << ptr->id()
                       << ", name: " << ptr->name()
                       << "]: " << caf::deep_to_string(x);
             return caf::message{};
@@ -158,7 +158,7 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
             auto client = mg::Client::Connect(self->state.params);
             if (!client)
             {
-                LOG_DEBUG << "Failed to connect MG Server";
+                LOG_ERROR << "Failed to connect MG Server";
                 return self->send(connectionActor,
                                   caf::forward_atom_v,
                                   ok::smart_actor::connection::addFailure(
@@ -910,7 +910,7 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                         if (!self->state.connPtr->Execute(query,
                                                           p2.asConstMap()))
                         {
-                            LOG_DEBUG << "Failed to execute query!" << query
+                            LOG_ERROR << "Failed to execute query!" << query
                                       << " "
                                       << mutationObject["deleteEdge"]["T"]
                                              .as_cstring()

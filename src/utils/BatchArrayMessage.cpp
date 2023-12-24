@@ -72,7 +72,7 @@ jsoncons::ojson addCurrentMember(jsoncons::ojson &array,
     auto [error, user] = ok::db::auth::user(memberKey);
     if (!error.empty())
     {
-        LOG_DEBUG << error;
+        LOG_ERROR << error;
         return array;
     }
 
@@ -165,9 +165,9 @@ jsoncons::ojson addLogout(jsoncons::ojson &array) noexcept
   }
   catch (std::exception const &e)
   {
-    LOG_DEBUG << "cant set member schema.";
-    LOG_DEBUG << "member json: " << json;
-    LOG_DEBUG << "reason: " << e.what();
+    LOG_ERROR << "cant set member schema.";
+    LOG_ERROR << "member json: " << json;
+    LOG_ERROR << "reason: " << e.what();
   }
 }*/
 }  // namespace connection

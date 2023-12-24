@@ -8,13 +8,13 @@ namespace supervisor
 main_actor_int::behavior_type MainActor(MainActorPointer self)
 {
     self->set_error_handler([](caf::error &err) {
-        LOG_DEBUG << "Main Actor Error :";
-        LOG_DEBUG << ok::smart_actor::supervisor::getReasonString(err);
+        LOG_ERROR << "Main Actor Error :";
+        LOG_ERROR << ok::smart_actor::supervisor::getReasonString(err);
     });
     self->set_down_handler([](caf::scheduled_actor *act,
                               caf::down_msg &msg) noexcept {
-        LOG_DEBUG << "Monitored Actor Error Down Error :" << act->name();
-        LOG_DEBUG << ok::smart_actor::supervisor::getReasonString(msg.reason);
+        LOG_ERROR << "Monitored Actor Error Down Error :" << act->name();
+        LOG_ERROR << ok::smart_actor::supervisor::getReasonString(msg.reason);
     });
     // If self exception error occur: server freeze.
     self->set_exception_handler(
@@ -29,7 +29,7 @@ main_actor_int::behavior_type MainActor(MainActorPointer self)
             }
             catch (std::exception const &e)
             {
-                LOG_DEBUG << "Main Actor Exception Error : " << e.what();
+                LOG_ERROR << "Main Actor Exception Error : " << e.what();
             }
             return caf::make_error(
                 caf::pec::success);  // self will not resume actor.
@@ -37,8 +37,8 @@ main_actor_int::behavior_type MainActor(MainActorPointer self)
     self->set_default_handler(
         [](caf::scheduled_actor *ptr,
            caf::message &x) noexcept -> caf::skippable_result {
-            LOG_DEBUG << "unexpected message, I will Quit";
-            LOG_DEBUG << "*** unexpected message [id: " << ptr->id()
+            LOG_ERROR << "unexpected message, I will Quit";
+            LOG_ERROR << "*** unexpected message [id: " << ptr->id()
                       << ", name: " << ptr->name()
                       << "]: " << caf::deep_to_string(x);
             return caf::message{};
@@ -109,7 +109,7 @@ void passToWsControllerActor(MainActorPointer act,
     if (auto const &it = act->state.oldActorMap.find(wsConnPtr);
         it == std::end(act->state.oldActorMap))
     {
-        LOG_DEBUG << "This should never happen when passing message to the "
+        LOG_ERROR << "This should never happen when passing message to the "
                      "connection.";
         exit(1);
     }
@@ -235,7 +235,7 @@ void shutdownNow(MainActorPointer act) noexcept
     //
     // act->send(a, conn_exit_atom_v);
     // act->demonitor(a.address());
-    LOG_DEBUG << "shutdown main actor";
+    LOG_ERROR << "shutdown main actor";
 }
 }  // namespace impl
 }  // namespace supervisor

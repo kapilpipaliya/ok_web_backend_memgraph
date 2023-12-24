@@ -82,25 +82,25 @@ jwt::jwt_object decodeCookie(std::string const& encodedString)
   }
   catch (jwt::TokenExpiredError const& e)
   {
-    LOG_DEBUG << "Handle Token expired exception here " << encodedString;
+    LOG_ERROR << "Handle Token expired exception here " << encodedString;
     //...
     return {};
   }
   catch (jwt::SignatureFormatError const& e)
   {
-    LOG_DEBUG << "Handle invalid signature format error " << encodedString;
+    LOG_ERROR << "Handle invalid signature format error " << encodedString;
     //...
     return {};
   }
   catch (jwt::DecodeError const& e)
   {
-    LOG_DEBUG << "Handle all kinds of other decode errors " << encodedString;
+    LOG_ERROR << "Handle all kinds of other decode errors " << encodedString;
     //...
     return {};
   }
   catch (jwt::VerificationError const& e)
   {
-    LOG_DEBUG << "Handle the base verification error. " << encodedString;
+    LOG_ERROR << "Handle the base verification error. " << encodedString;
     // NOTE: There are other derived types of verification errors
     // which will be discussed in next topic.
     return {};

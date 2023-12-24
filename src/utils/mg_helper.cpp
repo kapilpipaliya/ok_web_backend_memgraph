@@ -50,37 +50,37 @@ jsoncons::ojson convertListToJson(mg::ConstList list)
                 break;
             }
             case mg::Value::Type::UnboundRelationship:
-                LOG_DEBUG << "UnboundRelationship";
+                LOG_ERROR << "UnboundRelationship";
                 break;
             case mg::Value::Type::Path:
-                LOG_DEBUG << "Path";
+                LOG_ERROR << "Path";
                 break;
             case mg::Value::Type::Date:
-                LOG_DEBUG << "Date";
+                LOG_ERROR << "Date";
                 break;
             case mg::Value::Type::Time:
-                LOG_DEBUG << "Time";
+                LOG_ERROR << "Time";
                 break;
             case mg::Value::Type::LocalTime:
-                LOG_DEBUG << "LocalTime";
+                LOG_ERROR << "LocalTime";
                 break;
             case mg::Value::Type::DateTime:
-                LOG_DEBUG << "DateTime";
+                LOG_ERROR << "DateTime";
                 break;
             case mg::Value::Type::DateTimeZoneId:
-                LOG_DEBUG << "DateTimeZoneId";
+                LOG_ERROR << "DateTimeZoneId";
                 break;
             case mg::Value::Type::LocalDateTime:
-                LOG_DEBUG << "LocalDateTime";
+                LOG_ERROR << "LocalDateTime";
                 break;
             case mg::Value::Type::Duration:
-                LOG_DEBUG << "Duration";
+                LOG_ERROR << "Duration";
                 break;
             case mg::Value::Type::Point2d:
-                LOG_DEBUG << "Point2d";
+                LOG_ERROR << "Point2d";
                 break;
             case mg::Value::Type::Point3d:
-                LOG_DEBUG << "Point3d";
+                LOG_ERROR << "Point3d";
                 break;
         }
     }

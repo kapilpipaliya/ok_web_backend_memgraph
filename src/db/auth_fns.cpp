@@ -207,7 +207,6 @@ jsoncons::ojson getRolesOfUser(int const &memberKey){
         else
             return jsoncons::ojson::null();
     }
-    LOG_DEBUG << "hji6";
     return jsoncons::ojson::null();
 }
 }

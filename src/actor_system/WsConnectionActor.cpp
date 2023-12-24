@@ -19,8 +19,8 @@ ws_connector_actor_int::behavior_type WsControllerActor(
         ok::smart_actor::supervisor::default_exception_handler(
             "Mutate Connection Actor"));
     self->set_down_handler([=](caf::scheduled_actor *, caf::down_msg &msg) {
-        LOG_DEBUG << "Monitored Actor(by connection) Error Down Error :";
-        LOG_DEBUG << ok::smart_actor::supervisor::getReasonString(msg.reason);
+        LOG_ERROR << "Monitored Actor(by connection) Error Down Error :";
+        LOG_ERROR << ok::smart_actor::supervisor::getReasonString(msg.reason);
     });
     // MutationActor will use IO
     // and should thus be spawned in a separate thread
@@ -49,7 +49,7 @@ ws_connector_actor_int::behavior_type WsControllerActor(
             if (er)
                 return sendJson(self->state.wsConnPtr, valin);
             if (auto [er, result] = ok::smart_actor::connection::processEvent(
-                    valin, self->state.session, self->state.subDomain, self);
+                    valin, self->state.session, self->state.session.subDomain, self);
                 er)
                 sendJson(self->state.wsConnPtr, result);
             else if (!result.is_null() && result.is_array() && !result.empty())
@@ -65,7 +65,7 @@ ws_connector_actor_int::behavior_type WsControllerActor(
                 exit(1);
             }
             if (auto [er, result] = ok::smart_actor::connection::processEvent(
-                    result_, self->state.session, self->state.subDomain, self);
+                    result_, self->state.session, self->state.session.subDomain, self);
                 er)
                 sendJson(self->state.wsConnPtr, result);
             else if (!result.is_null() && result.is_array() && !result.empty())
@@ -115,7 +115,7 @@ void saveNewConnection(
 
     auto [memberKey, member] = ok::db::auth::loginJwt(jwtEncoded);
     state.session.memberKey = memberKey;
-    state.subDomain = firstSubDomain;
+    state.session.subDomain = firstSubDomain;
 
     one.push_back(member);
     memberMsg.push_back(one);

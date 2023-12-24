@@ -1,6 +1,7 @@
 #include "Api.hpp"
 #include <string>
 #include "db/Session.hpp"
+#include <drogon/drogon.h>
 #include "actor_system/CAF.hpp"
 #include <filesystem>
 #include "jwt/jwt.hpp"
@@ -9,6 +10,7 @@
 #include "third_party/mgclient/src/mgvalue.h"
 #include "utils/mg_helper.hpp"
 #include "utils/time_functions.hpp"
+#include "db/get_functions.hpp"
 
 #define RequestHandlerParams           \
     drogon::HttpRequestPtr const &req, \
@@ -33,7 +35,43 @@ void registerApi()
                                   {drogon::Post, drogon::Options});
     drogon::app().registerHandler("/api/download/{1}/{2}/{3}",
                                   &file::download,
-                                  {drogon::Get, drogon::Options});
+                                  {drogon::Get, drogon::Post, drogon::Options});
+
+    drogon::app().registerHandler("/get_data",
+                                  [](RequestHandlerParams){
+
+
+                                                                            // Create a task to run the file upload logic in a separate thread
+                                                                            std::thread([req, callback]() {
+
+                                                                                jsoncons::ojson args{};
+
+                                                                                mg::Client::Params params;
+                                                                                params.host = "localhost";
+                                                                                params.port = global_var::mg_port;
+                                                                                params.use_ssl = false;
+
+                                                                                // create new connection:
+                                                                                auto mgClient = mg::Client::Connect(params);
+                                                                                if (!mgClient)
+                                                                                {
+                                                                                    LOG_DEBUG << "Failed to connect MG Server. Host=" << params.host << " Port=" << params.port;
+                                                                                }
+
+                                                                                jsoncons::ojson result =
+                                                                                    ok::db::get::getInitialData(args, mgClient, ok::smart_actor::connection::Session{});
+
+                                                                                auto resp = drogon::HttpResponse::newHttpResponse();
+                                                                                resp->setBody(result.to_string());
+                                                                                resp->setContentTypeCode(drogon::CT_APPLICATION_JSON);
+                                                                                callback(resp);
+                                                                            }).detach(); // Detach the thread to let it run independently
+
+
+
+
+                                  },
+                                  {drogon::Get, drogon::Post, drogon::Options});
     /*drogon::app().registerHandler("/api/chat/drogon",
                                   [](RequestHandlerParams)
                                   {
@@ -330,7 +368,7 @@ std::tuple<ErrorMsg, VertexId> saveTo(
     std::ofstream file_ofstream(filePath, std::ofstream::out);
     if (!file_ofstream)
     {
-        LOG_DEBUG << "cant uploaded file:" << filePath
+        LOG_ERROR << "cant uploaded file:" << filePath
                   << " Error: " << strerror(errno) << " working directory"
                   << std::filesystem::current_path();
     }
@@ -340,7 +378,7 @@ std::tuple<ErrorMsg, VertexId> saveTo(
         file_ofstream.close();
         auto [er, key] = saveFileToDatabase(file, fileName, session, isTemp);
         saveThumbnails(fileName);
-        LOG_DEBUG << "save uploaded file:" << fileName << " path: " << filePath;
+        LOG_ERROR << "save uploaded file:" << fileName << " path: " << filePath;
         return {er, key};
     }
     LOG_ERROR << "save failed!";

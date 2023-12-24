@@ -169,7 +169,7 @@ void addSyncRoutes()
                            caf::subscribe_atom_v,
                            event,
                            args,
-                           session.memberKey,
+                           session,
                            currentActor);
     };
 }

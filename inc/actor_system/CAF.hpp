@@ -54,7 +54,7 @@ using main_actor_int = caf::typed_actor<caf::result<void>(spawn_and_monitor_atom
 CAF_ADD_TYPE_ID(okproject, (main_actor_int))
 
 using sync_actor_int = caf::typed_actor<
-    caf::result<void>(caf::subscribe_atom, WsEvent, WsArguments, VertexId, ws_connector_actor_int),
+    caf::result<void>(caf::subscribe_atom, WsEvent, WsArguments, ok::smart_actor::connection::Session, ws_connector_actor_int),
     caf::result<void>(create_atom, std::vector<VertexId>, std::vector<EdgeId>),
                                         caf::result<void>(set_atom, std::vector<VertexId>, std::vector<EdgeId>),
                                         caf::result<void>(remove_atom, std::vector<VertexId>, std::vector<EdgeId>),

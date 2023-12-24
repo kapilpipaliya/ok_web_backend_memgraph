@@ -30,7 +30,7 @@ inline void sendMessageToMainActorOld(drogon::WebSocketConnectionPtr const &wsCo
     }
     case drogon::WebSocketMessageType::Close: break;
     case drogon::WebSocketMessageType::Ping:
-    default: LOG_DEBUG << "Not handled message:" << static_cast<int>(type); break;
+    default: LOG_ERROR << "Not handled message:" << static_cast<int>(type); break;
   }
 }
 inline void sendExitToMainActorOld(drogon::WebSocketConnectionPtr const &wsConnPtr)

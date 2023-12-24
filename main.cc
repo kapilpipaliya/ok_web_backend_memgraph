@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
 {
     if (argc < 3)
     {
-        LOG_DEBUG << "Arguments should be > 2, first is config file and"
+        LOG_ERROR << "Arguments should be > 2, first is config file and"
                      " second is mg port third is server port that is exposed";
         exit(1);
     }

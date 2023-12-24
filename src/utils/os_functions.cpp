@@ -15,7 +15,7 @@ void assertDirectoryExist(const std::vector<std::string> &paths){
   for(const auto &path: paths){
     if (!(std::filesystem::exists(path) && std::filesystem::is_directory(path)))
     {
-      LOG_DEBUG << "path directory not exist: " << path;
+      LOG_ERROR << "path directory not exist: " << path;
       LOG_DEBUG << "current path is: " << std::filesystem::current_path().string();
       exit(1);
     }

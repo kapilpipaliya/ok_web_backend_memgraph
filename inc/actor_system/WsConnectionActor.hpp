@@ -13,7 +13,6 @@ struct ws_controller_state
 {
   static inline constexpr char const *name = "connection-actor";
   drogon::WebSocketConnectionPtr wsConnPtr = nullptr;
-  std::string subDomain;
   ok::smart_actor::connection::Session session;
   mutation_actor_int mutationActor;
 };

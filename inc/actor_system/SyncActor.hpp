@@ -19,8 +19,7 @@ struct syncActorState
 {
   static inline constexpr char const *name = "sync-actor";
   std::unordered_map<ws_connector_actor_int, jsoncons::ojson, hash_name> wsActorArgs;
-  using DbConnectionPtr = std::shared_ptr<mg::Client>;
-  DbConnectionPtr connPtr;
+  std::unique_ptr<mg::Client> mgClient;
   mg::Client::Params params;
   syncActorState(){
         params.host = "localhost";
@@ -30,7 +29,7 @@ struct syncActorState
 };
 using SyncActorPointer = sync_actor_int::stateful_pointer<syncActorState>;
 sync_actor_int::behavior_type SyncActor(SyncActorPointer self);
-bool reconnect(syncActorState::DbConnectionPtr &connPtr);
+
 namespace impl
 {
 }  // namespace impl

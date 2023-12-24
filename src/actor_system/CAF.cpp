@@ -33,10 +33,6 @@ void initialiseMainActor(int argc, char *argv[]) noexcept
         ok::smart_actor::supervisor::SyncActor);
     // or
     // main_actor = self->spawn<MainActor>();
-    CAF_LOG_DEBUG("1initialized caf system");
-    CAF_LOG_TRACE("2initialized caf system");
-    CAF_LOG_INFO("3initialized caf system");
-    std::cerr << "DONE" << std::endl;
 }
 std::string getReasonString(caf::error &err) noexcept
 {
