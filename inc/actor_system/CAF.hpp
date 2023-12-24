@@ -63,7 +63,7 @@ using sync_actor_int = caf::typed_actor<
 CAF_ADD_TYPE_ID(okproject, (sync_actor_int))
 
 using mutation_actor_int = caf::typed_actor<
-    caf::result<void>(create_atom, VertexId, WsArguments, ws_connector_actor_int),
+    caf::result<void>(create_atom, ok::smart_actor::connection::Session, WsArguments, ws_connector_actor_int),
     caf::result<void>(shutdown_atom)>;
 CAF_ADD_TYPE_ID(okproject, (mutation_actor_int))
 

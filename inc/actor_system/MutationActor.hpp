@@ -3,16 +3,14 @@
 #include <jsoncons/json.hpp>
 #include "CAF.hpp"
 #include "mgclient.hpp"
-namespace ok::smart_actor
-{
-namespace supervisor
+
+namespace ok::smart_actor::supervisor
 {
 struct mutationState
 {
     static inline constexpr char const *name = "mutation-actor";
     ws_connector_actor_int wsActor;
-    using DbConnectionPtr = std::shared_ptr<mg::Client>;
-    DbConnectionPtr connPtr;
+    std::unique_ptr<mg::Client> mgClient;
     mg::Client::Params params;
     mutationState(){
         params.host = "localhost";
@@ -25,5 +23,5 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self);
 namespace impl
 {
 }  // namespace impl
-}  // namespace supervisor
-}  // namespace ok::smart_actor
+} // namespace ok::smart_actor::supervisor
+

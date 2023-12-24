@@ -178,7 +178,7 @@ void addMutateRoutes()
     routeFunctions["mutate"] = [](RouteArgs) {
         currentActor->send(currentActor->state.mutationActor,
                            create_atom_v,
-                           session.memberKey,
+                           session,
                            args,
                            currentActor);
         jsoncons::ojson result;

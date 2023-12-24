@@ -11,6 +11,7 @@
 #include "utils/mg_helper.hpp"
 #include "utils/time_functions.hpp"
 #include "db/get_functions.hpp"
+#include "db/mutate_functions.hpp"
 
 #define RequestHandlerParams           \
     drogon::HttpRequestPtr const &req, \
@@ -55,11 +56,49 @@ void registerApi()
                                                                                 auto mgClient = mg::Client::Connect(params);
                                                                                 if (!mgClient)
                                                                                 {
-                                                                                    LOG_DEBUG << "Failed to connect MG Server. Host=" << params.host << " Port=" << params.port;
+                                                                                    LOG_ERROR << "Failed to connect MG Server. Host=" << params.host << " Port=" << params.port;
                                                                                 }
 
                                                                                 jsoncons::ojson result =
                                                                                     ok::db::get::getInitialData(args, mgClient, ok::smart_actor::connection::Session{});
+
+                                                                                auto resp = drogon::HttpResponse::newHttpResponse();
+                                                                                resp->setBody(result.to_string());
+                                                                                resp->setContentTypeCode(drogon::CT_APPLICATION_JSON);
+                                                                                callback(resp);
+                                                                            }).detach(); // Detach the thread to let it run independently
+
+
+
+
+                                  },
+                                  {drogon::Get, drogon::Post, drogon::Options});
+    drogon::app().registerHandler("/mutate_data",
+                                  [](RequestHandlerParams){
+
+
+                                                                            // Create a task to run the file upload logic in a separate thread
+                                                                            std::thread([req, callback]() {
+                                                                                auto event = jsoncons::ojson::array();
+                                                                                event.push_back("post");
+                                                                                event.push_back("mutate");
+                                                                                event.push_back(0);
+                                                                                jsoncons::ojson args{};
+
+                                                                                mg::Client::Params params;
+                                                                                params.host = "localhost";
+                                                                                params.port = global_var::mg_port;
+                                                                                params.use_ssl = false;
+
+                                                                                // create new connection:
+                                                                                auto mgClient = mg::Client::Connect(params);
+                                                                                if (!mgClient)
+                                                                                {
+                                                                                    LOG_ERROR << "Failed to connect MG Server. Host=" << params.host << " Port=" << params.port;
+                                                                                }
+
+                                                                                jsoncons::ojson result =
+                                                                                    ok::db::mutate::mutate_data(event, args, mgClient, ok::smart_actor::connection::Session{});
 
                                                                                 auto resp = drogon::HttpResponse::newHttpResponse();
                                                                                 resp->setBody(result.to_string());

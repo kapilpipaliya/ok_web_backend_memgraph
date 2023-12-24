@@ -6,7 +6,6 @@
 #include "db/mgclientPool.hpp"
 #include <magic_enum.hpp>
 #include "actor_system/SyncActor.hpp"
-#include "db/get_functions.hpp"
 namespace ok::db::get
 {
 
