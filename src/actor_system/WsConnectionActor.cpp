@@ -30,9 +30,11 @@ ws_connector_actor_int::behavior_type WsControllerActor(
         // Fix can't use this message because cyclic dependency in types in
         // CAF.hpp
         [=](drogon::WebSocketConnectionPtr const &wsConnPtr,
+            const sync_actor_wrapper& syncActorWrapper,
             std::string const &jwtEncoded,
             std::string const &firstSubDomain) {
             self->state.wsConnPtr = wsConnPtr;
+            self->state.syncActor = syncActorWrapper.syncActor;
             impl::saveNewConnection(self, self->state, jwtEncoded, firstSubDomain);
         },
         [=](get_session_atom) { return self->state.session; },

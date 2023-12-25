@@ -105,10 +105,7 @@ void spanAndSaveConnectionActor(MainActorPointer act,
         act->state.subDomainToSyncActorMap.emplace(firstSubDomain, syncActor);
     }
 
-
-
-
-    act->send(connectionActor, wsConnPtr, jwtEncoded, firstSubDomain);
+    act->send(connectionActor,wsConnPtr,sync_actor_wrapper{act->state.subDomainToSyncActorMap[firstSubDomain]}, jwtEncoded, firstSubDomain);
     act->state.wsPtrToWsActorMap.insert({wsConnPtr, std::move(connectionActor)});
 }
 void passToWsControllerActor(MainActorPointer act,
@@ -140,6 +137,7 @@ void connectionExit(MainActorPointer act,
         act->send<caf::message_priority::high>(connectionActor,
                                                conn_exit_atom_v);
         act->demonitor(connectionActor.address());
+        // if required do: if subdomain has no wsActor, down sync actor from subDomainToSyncActorMap
 //        act->send(ok::smart_actor::supervisor::syncActor,
 //                  conn_exit_atom_v,
 //                  connectionActor);

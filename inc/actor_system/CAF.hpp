@@ -4,6 +4,8 @@
 #include <jsoncons/json.hpp>
 #include "db/Session.hpp"
 
+struct sync_actor_wrapper;
+
 CAF_BEGIN_TYPE_ID_BLOCK(okproject, first_custom_type_id)
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(drogon::WebSocketConnectionPtr)
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(drogon::WebSocketMessageType)
@@ -29,11 +31,12 @@ CAF_ADD_TYPE_ID(okproject, (drogon::WebSocketConnectionPtr))
 CAF_ADD_TYPE_ID(okproject, (drogon::WebSocketMessageType))
 CAF_ADD_TYPE_ID(okproject, (jsoncons::ojson))
 CAF_ADD_TYPE_ID(okproject, (ok::smart_actor::connection::Session))
+CAF_ADD_TYPE_ID(okproject, (sync_actor_wrapper))
 CAF_ADD_TYPE_ID(okproject, (std::vector<std::string>))
 CAF_ADD_TYPE_ID(okproject, (std::vector<VertexId>))
 CAF_ADD_TYPE_ID(okproject, (std::unordered_set<std::string>))
 
-using ws_connector_actor_int = caf::typed_actor<caf::result<void>(drogon::WebSocketConnectionPtr, std::string, std::string),
+using ws_connector_actor_int = caf::typed_actor<caf::result<void>(drogon::WebSocketConnectionPtr, sync_actor_wrapper, std::string, std::string),
                                                 caf::result<ok::smart_actor::connection::Session>(get_session_atom),
                                                 caf::result<void>(set_context_atom, ok::smart_actor::connection::Session),
                                                 caf::result<void>(std::string, drogon::WebSocketMessageType),
@@ -58,12 +61,24 @@ using sync_actor_int = caf::typed_actor<
     caf::result<void>(shutdown_atom)>;
 CAF_ADD_TYPE_ID(okproject, (sync_actor_int))
 
+
 using mutation_actor_int = caf::typed_actor<
     caf::result<void>(create_atom, ok::smart_actor::connection::Session, WsArguments, ws_connector_actor_int),
     caf::result<void>(shutdown_atom)>;
 CAF_ADD_TYPE_ID(okproject, (mutation_actor_int))
 
 CAF_END_TYPE_ID_BLOCK(okproject)
+
+
+struct sync_actor_wrapper {
+    sync_actor_int syncActor;
+};
+
+
+template <class Inspector> bool inspect(Inspector& f, sync_actor_wrapper& x) {
+    return f.object(x).fields(f.field("syncActor",x.syncActor));
+}
+
 
 #define CONN_EXIT                            \
   [=](conn_exit_atom)                        \

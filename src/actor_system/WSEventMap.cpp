@@ -165,12 +165,12 @@ void addAuthRoutes()
 void addSyncRoutes()
 {
     routeFunctions["sync"] = [](RouteArgs) {
-//        currentActor->send(ok::smart_actor::supervisor::syncActor,
-//                           caf::subscribe_atom_v,
-//                           event,
-//                           args,
-//                           session,
-//                           currentActor);
+        currentActor->send(currentActor->state.syncActor,
+                           caf::subscribe_atom_v,
+                           event,
+                           args,
+                           session,
+                           currentActor);
     };
 }
 void addMutateRoutes()
