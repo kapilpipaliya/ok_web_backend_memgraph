@@ -26,9 +26,9 @@ struct MGParams
         mg_map_destroy(extra);
     }
 };
-int getIdFromResponse(std::vector<std::vector<mg::Value> > const &response);
-std::vector<std::string> getNamesFromResponse(std::vector<std::vector<mg::Value> > const &response);
-int getIdFromRelationshipResponse(std::vector<std::vector<mg::Value> > const &response);
+int getIdFromMGResponse(std::vector<std::vector<mg::Value> > const &response);
+std::vector<std::string> getNamesFromMGResponse(std::vector<std::vector<mg::Value> > const &response);
+int getIdFromMGRelationshipResponse(std::vector<std::vector<mg::Value> > const &response);
 std::pair<std::string, std::optional<std::vector<std::vector<mg::Value>>>>
 mgCall(std::string const &query, ok::db::MGParams &p);
 }  // namespace ok::db

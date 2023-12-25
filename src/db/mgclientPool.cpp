@@ -3,7 +3,7 @@
 #include "mgclient.hpp"
 namespace ok::db
 {
-int getIdFromResponse(std::vector<std::vector<mg::Value>> const &response)
+int getIdFromMGResponse(std::vector<std::vector<mg::Value>> const &response)
 {
     int userId = -1;
     for (auto &row : response)
@@ -18,7 +18,7 @@ int getIdFromResponse(std::vector<std::vector<mg::Value>> const &response)
     }
     return userId;
 }
-std::vector<std::string> getNamesFromResponse(
+std::vector<std::string> getNamesFromMGResponse(
     std::vector<std::vector<mg::Value>> const &response)
 {
     std::vector<std::string> collections{};
@@ -42,7 +42,7 @@ std::vector<std::string> getNamesFromResponse(
     }
     return collections;
 }
-int getIdFromRelationshipResponse(
+int getIdFromMGRelationshipResponse(
     std::vector<std::vector<mg::Value>> const &response)
 {
     int userId = -1;

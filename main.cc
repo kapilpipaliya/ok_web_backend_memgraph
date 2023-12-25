@@ -1,12 +1,12 @@
 // #include "backward.hpp"
 #include <drogon/drogon.h>
 #include "actor_system/CAF.hpp"
-#include "utils/os_functions.hpp"
+#include "lib/os_functions.hpp"
 #include "Api.hpp"
 #include "actor_system/WSEventMap.hpp"
 #include "db/mgclientPool.hpp"
 #include <numeric>  // std::accumulate
-#include "utils/mg_helper.hpp"
+#include "lib/mg_helper.hpp"
 namespace
 {
 void loadDrogonConfig(const std::string& file)
@@ -31,12 +31,12 @@ void runActorFramework(int argc, char* argv[])
     caf::anon_send(ok::smart_actor::supervisor::mainActor,
                    spawn_and_monitor_atom_v);
 }
-void runDrogon(int port)
+void runDrogon()
 {
     ok::api::registerAuthApi();
     ok::api::registerApi();
     ok::api::registerRegexApi();
-    drogon::app().addListener("0.0.0.0", port).run();
+    drogon::app().addListener("0.0.0.0", 1101).run();
 }
 // jsoncons::ojson memGrapMapToJson(std::vector<std::vector<mg::Value>>&
 // response) {
@@ -140,12 +140,11 @@ int main(int argc, char* argv[])
                      " second is mg port third is server port that is exposed";
         exit(1);
     }
-    global_var::mg_port = std::stoi(std::string{argv[2]});
-    int port = std::stoi(std::string{argv[3]});
+
     loadDrogonConfig(argv[1]);
     // ok::smart_actor::connection::setGlobalVariables();
     //  memGraphTest();
     setupConstrains();
     runActorFramework(argc, argv);
-    runDrogon(port);
+    runDrogon();
 }

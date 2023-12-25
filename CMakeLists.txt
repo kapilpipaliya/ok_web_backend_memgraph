@@ -94,6 +94,7 @@ aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/plugins PLUGIN_SRC)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/models MODEL_SRC)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/actor_system CAF_SRC)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/db DB_SRC)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/lib LIB_SRC)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/utils UTILS_SRC)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src MAIN_SRC)
 
@@ -118,6 +119,7 @@ target_sources(${PROJECT_NAME}
                ${MODEL_SRC}
                ${UTILS_SRC}
                ${DB_SRC}
+               ${LIB_SRC}
                ${CAF_SRC}
                ${MAIN_SRC}
                )

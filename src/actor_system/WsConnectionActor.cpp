@@ -6,7 +6,7 @@
 #include <jsoncons/json.hpp>
 #include <magic_enum.hpp>
 #include <utility>
-#include "utils/json_functions.hpp"
+#include "lib/json_functions.hpp"
 #include "db/auth_fns.hpp"
 namespace ok::smart_actor
 {
@@ -33,7 +33,7 @@ ws_connector_actor_int::behavior_type WsControllerActor(
             std::string const &jwtEncoded,
             std::string const &firstSubDomain) {
             self->state.wsConnPtr = wsConnPtr;
-            saveNewConnection(self, self->state, jwtEncoded, firstSubDomain);
+            impl::saveNewConnection(self, self->state, jwtEncoded, firstSubDomain);
         },
         [=](get_session_atom) { return self->state.session; },
         [=](set_context_atom, ok::smart_actor::connection::Session const &s) {
@@ -47,16 +47,16 @@ ws_connector_actor_int::behavior_type WsControllerActor(
             drogon::WebSocketMessageType const &type) {
             auto [er, valin] = impl::parseJson(message);
             if (er)
-                return sendJson(self->state.wsConnPtr, valin);
-            if (auto [er, result] = ok::smart_actor::connection::processEvent(
+                return impl::sendJson(self->state.wsConnPtr, valin);
+            if (auto [er, result] = impl::processEvent(
                     valin, self->state.session, self->state.session.subDomain, self);
                 er)
-                sendJson(self->state.wsConnPtr, result);
+                impl::sendJson(self->state.wsConnPtr, result);
             else if (!result.is_null() && result.is_array() && !result.empty())
-                sendJson(self->state.wsConnPtr, result);
+                impl::sendJson(self->state.wsConnPtr, result);
         },
         [=](caf::forward_atom, jsoncons::ojson const &result) {
-            sendJson(self->state.wsConnPtr, result);
+            impl::sendJson(self->state.wsConnPtr, result);
         },
         [=](dispatch_atom, jsoncons::ojson &result_) {
             if (!self->state.wsConnPtr)
@@ -64,12 +64,12 @@ ws_connector_actor_int::behavior_type WsControllerActor(
                 LOG_FATAL << "this must not happened on " << self->name();
                 exit(1);
             }
-            if (auto [er, result] = ok::smart_actor::connection::processEvent(
+            if (auto [er, result] = impl::processEvent(
                     result_, self->state.session, self->state.session.subDomain, self);
                 er)
-                sendJson(self->state.wsConnPtr, result);
+                impl::sendJson(self->state.wsConnPtr, result);
             else if (!result.is_null() && result.is_array() && !result.empty())
-                sendJson(self->state.wsConnPtr, result);
+                impl::sendJson(self->state.wsConnPtr, result);
         },
         [=](conn_exit_atom) {
             self->send(self->state.mutationActor, shutdown_atom_v);
@@ -78,6 +78,10 @@ ws_connector_actor_int::behavior_type WsControllerActor(
         },
     };
 }
+
+
+namespace impl
+{
 void sendJson(drogon::WebSocketConnectionPtr wsConnPtr,
               jsoncons::ojson const &json) noexcept
 {
@@ -116,6 +120,7 @@ void saveNewConnection(
     auto [memberKey, member] = ok::db::auth::loginJwt(jwtEncoded);
     state.session.memberKey = memberKey;
     state.session.subDomain = firstSubDomain;
+    state.session.mg_port = ok::db::auth::getSubDomainPort(firstSubDomain);
 
     one.push_back(member);
     memberMsg.push_back(one);
@@ -161,9 +166,6 @@ std::tuple<bool, jsoncons::ojson> processEvent(
     }
     return {false, resultMsg};
 }
-
-namespace impl
-{
 std::tuple<bool, jsoncons::ojson> parseJson(std::string message)
 {
     try

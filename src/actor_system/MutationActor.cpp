@@ -3,7 +3,7 @@
 #include "db/mgclientPool.hpp"
 #include "third_party/mgclient/src/mgvalue.h"
 #include "utils/BatchArrayMessage.hpp"
-#include "utils/json_functions.hpp"
+#include "lib/json_functions.hpp"
 #include "jsoncons/json_encoder2.hpp"
 #include "db/mutate_functions.hpp"
 #include "db/Session.hpp"

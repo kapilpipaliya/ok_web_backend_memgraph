@@ -3,7 +3,7 @@
 #include <drogon/WebSocketController.h>
 #include "actor_system/CAF.hpp"
 #include "utils/html_functions.hpp"
-// #include "Actions/RestActionHandler.h"
+#include "lib/string_functions.hpp"
 namespace ok
 {
 namespace smart_actor::connection
@@ -18,7 +18,7 @@ void registerRegexApi();
 namespace ws
 {
 inline void setPingReplyMessage(drogon::WebSocketConnectionPtr const &wsConnPtr) { wsConnPtr->setPingMessage("Pong", std::chrono::duration<long double>(15000)); }
-inline void sendMessageToMainActorOld(drogon::WebSocketConnectionPtr const &wsConnPtr, std::string &&message, drogon::WebSocketMessageType const &type)
+inline void sendMessageToMainActor(drogon::WebSocketConnectionPtr const &wsConnPtr, std::string &&message, drogon::WebSocketMessageType const &type)
 {
   switch (type)
   {
@@ -33,9 +33,9 @@ inline void sendMessageToMainActorOld(drogon::WebSocketConnectionPtr const &wsCo
     default: LOG_ERROR << "Not handled message:" << static_cast<int>(type); break;
   }
 }
-inline void sendExitToMainActorOld(drogon::WebSocketConnectionPtr const &wsConnPtr)
+inline void sendExitToMainActor(drogon::WebSocketConnectionPtr const &wsConnPtr)
 {
-  caf::anon_send(ok::smart_actor::supervisor::mainActor, conn_exit_old_atom_v, wsConnPtr);
+  caf::anon_send(ok::smart_actor::supervisor::mainActor, conn_exit_atom_v, wsConnPtr);
 }
 }  // namespace ws
 class Ws : public drogon::WebSocketController<Ws>
@@ -45,13 +45,14 @@ public:
   {
 //    LOG_DEBUG << req->getHeader("host") << " " << req->getLocalAddr().toIp();
     ws::setPingReplyMessage(wsConnPtr);
-    caf::anon_send(ok::smart_actor::supervisor::mainActor, save_old_wsconnptr_atom_v, wsConnPtr, req->getCookie("jwt"), ok::utils::html::getSubdomain(req->getHeader("host")));
+    caf::anon_send(ok::smart_actor::supervisor::mainActor, save_wsconnptr_atom_v, wsConnPtr, req->getCookie("jwt"), ok::utils::string::getLastThirdSegment(req->getHeader("host")));
   }
   inline void handleNewMessage(drogon::WebSocketConnectionPtr const &wsConnPtr, std::string &&message, drogon::WebSocketMessageType const &type) override
   {
-    ws::sendMessageToMainActorOld(wsConnPtr, std::move(message), type);
+    ws::sendMessageToMainActor(wsConnPtr, std::move(message), type);
   }
-  inline void handleConnectionClosed(drogon::WebSocketConnectionPtr const &wsConnPtr) override { ws::sendExitToMainActorOld(wsConnPtr); }
+  inline void handleConnectionClosed(drogon::WebSocketConnectionPtr const &wsConnPtr) override {
+    ws::sendExitToMainActor(wsConnPtr); }
   WS_PATH_LIST_BEGIN
   WS_PATH_ADD("/ws");
   WS_PATH_LIST_END
@@ -82,11 +83,6 @@ namespace system_
 void sendError(std::function<void(drogon::HttpResponsePtr const &)> &callback, std::string message);
 void showServerHealthReport(drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpResponsePtr const &)> &&callback);
 void gracefullyShutdown(drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpResponsePtr const &)> &&callback);
-/*std::pair<ErrorCode, ErrorMsg> foxxApi(drogon::HttpRequestPtr const &req,
-                                       std::string &&urlPart,
-                                       std::function<void(arangodb::rest::RestHandler *)> &&handler1,
-                                       std::function<void(drogon::HttpResponsePtr const &)> &callback);
-void foxxApiResponse(drogon::HttpRequestPtr const &req, std::function<void(drogon::HttpResponsePtr const &)> &&callback, std::string &&urlPart);*/
 }  // namespace system_
 namespace Webhook
 {

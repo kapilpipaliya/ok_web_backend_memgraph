@@ -69,26 +69,6 @@ inline std::string getStringKey(jsoncons::ojson const &json, std::string const &
   if (jsoncons::ObjectMemberIsString(json, key)) return json[key].as_string();
   return "";
 }
-inline std::tuple<std::string, std::string, bool> getFirstStringOption(jsoncons::ojson const &options, jsoncons::ojson const &json)
-{
-  bool required{false};
-  for (auto const &option : options.array_range())
-  {
-    if (option.is_array())
-    {
-      if (jsoncons::ArrayPosIsString(option, 0) && json.contains(option[0].as_string_view()))
-      {
-        required = required || false;
-        return {option[0].as_string(), json[option[0].as_string_view()].as_string(), required};
-      }
-    }
-    else if (option.is_string())
-    {
-      required = required || true;
-      if (json.contains(option.as_string_view())) { return {option.as_string(), json[option.as_string_view()].as_string(), required}; }
-    }
-  }
-  return {"", "", required};
-}
+
 inline std::string to_string(jsoncons::ojson const &json) noexcept { return json.to_string(); }
 };  // namespace jsoncons

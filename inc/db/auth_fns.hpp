@@ -13,6 +13,7 @@ std::tuple<int, jsoncons::ojson> loginJwt(const std::string &jwtEncoded);
 std::tuple<ErrorMsg, std::string> change_password(VertexId const &memberKey,
     jsoncons::ojson const &o);
 std::tuple<ErrorMsg, jsoncons::ojson> user(const int memberKey);
+int getSubDomainPort(std::string const &subDomain);
 }
 }
 }

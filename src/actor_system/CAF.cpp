@@ -29,8 +29,6 @@ void initialiseMainActor(int argc, char *argv[]) noexcept
     // self = std::make_unique<caf::scoped_actor>(*actorSystem);
     mainActor = actorSystem->spawn<caf::detached>(
         ok::smart_actor::supervisor::MainActor);
-    syncActor = actorSystem->spawn<caf::detached>(
-        ok::smart_actor::supervisor::SyncActor);
     // or
     // main_actor = self->spawn<MainActor>();
 }

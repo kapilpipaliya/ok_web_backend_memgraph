@@ -1,6 +1,6 @@
 #include "db/get_functions.hpp"
 #include "utils/time_functions.hpp"
-#include "utils/mg_helper.hpp"
+#include "lib/mg_helper.hpp"
 #include "utils/BatchArrayMessage.hpp"
 #include "third_party/mgclient/src/mgvalue.h"
 #include "db/mgclientPool.hpp"
@@ -13,14 +13,14 @@ namespace ok::db::get
 void fetchNodesAPI(const std::string& query,
                    ok::db::MGParams &p,
                    jsoncons::ojson &nodes,
-                   std::unique_ptr<mg::Client> &connPtr)
+                   std::unique_ptr<mg::Client> &connPtr, int port)
 {
     if (!connPtr->Execute(query.c_str(), p.asConstMap()))
     {
         LOG_ERROR << "Failed to execute query!" << query << " "
                   << mg_session_error(connPtr->session_);
-        reconnect(connPtr);
-        fetchNodesAPI(query, p, nodes, connPtr);
+        reconnect(connPtr, port);
+        fetchNodesAPI(query, p, nodes, connPtr, port);
     }
     try
     {
@@ -38,7 +38,7 @@ void fetchNodesAPI(const std::string& query,
         result["error"] = true;
         result["message"] = e.what();
         LOG_ERROR << e.what();
-        reconnect(connPtr);
+        reconnect(connPtr, port);
         // only refetch if needed.
         // fetchNodesAPI(query, nodes, mgClient);
     }
@@ -47,14 +47,14 @@ void fetchNodesAPI(const std::string& query,
 void fetchRelationshipsAPI(const std::string& query,
                            ok::db::MGParams &p,
                            jsoncons::ojson &relationships,
-                           std::unique_ptr<mg::Client> &connPtr)
+                           std::unique_ptr<mg::Client> &connPtr, int port)
 {
     if (!connPtr->Execute(query, p.asConstMap()))
     {
         LOG_ERROR << "Failed to execute query!" << query << " "
                   << mg_session_error(connPtr->session_);
-        reconnect(connPtr);
-        fetchRelationshipsAPI(query, p, relationships, connPtr);
+        reconnect(connPtr, port);
+        fetchRelationshipsAPI(query, p, relationships, connPtr, port);
     }
     try
     {
@@ -72,7 +72,7 @@ void fetchRelationshipsAPI(const std::string& query,
         result["error"] = true;
         result["message"] = e.what();
         LOG_ERROR << e.what();
-        reconnect(connPtr);
+        reconnect(connPtr, port);
     }
 }
 
@@ -92,12 +92,12 @@ jsoncons::ojson getInitialData(
     if (superAdmin)
     {
         ok::db::MGParams p{};
-        fetchNodesAPI("MATCH (n) RETURN n;", p, nodes, mgClient);
+        fetchNodesAPI("MATCH (n) RETURN n;", p, nodes, mgClient, session.mg_port);
         ok::db::MGParams p1{};
         fetchRelationshipsAPI("MATCH ()-[r]->() RETURN r;",
                               p1,
                               relationships,
-                              mgClient);
+                              mgClient, session.mg_port);
     }
     // disable auth temparary
     // else if (memberKey != -1)
@@ -128,7 +128,7 @@ jsoncons::ojson getInitialData(
                 "MATCH (n) WHERE NOT all(l IN LABELS(n) WHERE l IN $labels) RETURN n;",
                 p,
                 nodes,
-                mgClient);
+                mgClient, session.mg_port);
 
             std::vector<std::string> labelType{"CompProp",
                                                "CompEvent",
@@ -146,7 +146,7 @@ jsoncons::ojson getInitialData(
                 "MATCH  ()-[r]->() WHERE NOT type(r) in $types RETURN r;",
                 p1,
                 relationships,
-                mgClient);
+                mgClient, session.mg_port);
 
             // send View Components:
             // get view compnents
@@ -162,36 +162,36 @@ jsoncons::ojson getInitialData(
                 "MATCH (ca:CompCategory {name: 'View'})-[]->(:Comp)-[]->(n) return DISTINCT n;",
                 p01,
                 nodes,
-                mgClient);
+                mgClient, session.mg_port);
 
             ok::db::MGParams p02{};
             fetchRelationshipsAPI(
                 "MATCH (ca:CompCategory {name: 'View'})-[]->(:Comp)-[r]->() return DISTINCT r;",
                 p02,
                 relationships,
-                mgClient);
+                mgClient, session.mg_port);
             ok::db::MGParams p03{};
             fetchRelationshipsAPI(
                 "MATCH (ca:CompCategory {name: 'View'})-[]->(:Comp)-[]->()-[r]->() return DISTINCT r;",
                 p03,
                 relationships,
-                mgClient);
+                mgClient, session.mg_port);
             ok::db::MGParams p04{};
             fetchRelationshipsAPI(
                 "MATCH (ca:CompCategory {name: 'View'})-[]->(:Comp)-[]->()<-[r]-() return DISTINCT r;",
                 p04,
                 relationships,
-                mgClient);
+                mgClient, session.mg_port);
         }
         else
         {
             ok::db::MGParams p{};
-            fetchNodesAPI("MATCH (n) RETURN n;", p, nodes, mgClient);
+            fetchNodesAPI("MATCH (n) RETURN n;", p, nodes, mgClient, session.mg_port);
             ok::db::MGParams p1{};
             fetchRelationshipsAPI("MATCH ()-[r]->() RETURN r;",
                                   p1,
                                   relationships,
-                                  mgClient);
+                                  mgClient, session.mg_port);
         }
     }
     else
@@ -215,7 +215,8 @@ jsoncons::ojson getInitialData(
                                               "CollAttrProp",
                                               "Nav",
                                               "NavAttr"};
-            auto getNamesFromResponse = ok::db::getNamesFromResponse(*response);
+            auto getNamesFromResponse =
+                ok::db::getNamesFromMGResponse(*response);
             for (auto &id : getNamesFromResponse)
             {
                 labelVec.emplace_back(id);
@@ -237,7 +238,7 @@ jsoncons::ojson getInitialData(
                 "RETURN n;",
                 p1,
                 nodes,
-                mgClient);
+                mgClient, session.mg_port);
 
             fetchRelationshipsAPI(
                 "MATCH (n)-[r]->(m) "
@@ -246,7 +247,7 @@ jsoncons::ojson getInitialData(
                 "RETURN r;",
                 p1,
                 relationships,
-                mgClient);
+                mgClient, session.mg_port);
         }
     }
 
@@ -283,12 +284,12 @@ jsoncons::ojson getInitialData(
     return result;
 }
 bool reconnect(
-    std::unique_ptr<mg::Client> &connPtr)
+    std::unique_ptr<mg::Client> &connPtr, int port)
 {
     connPtr->Finalize();
     mg::Client::Params params;
     params.host = "localhost";
-    params.port = global_var::mg_port;
+    params.port = port;
     params.use_ssl = false;
     auto client = mg::Client::Connect(params);
     connPtr = std::move(client);

@@ -8,10 +8,11 @@
 #include "db/mgclientPool.hpp"
 #include "pystring.hpp"
 #include "third_party/mgclient/src/mgvalue.h"
-#include "utils/mg_helper.hpp"
+#include "lib/mg_helper.hpp"
 #include "utils/time_functions.hpp"
 #include "db/get_functions.hpp"
 #include "db/mutate_functions.hpp"
+#include "lib/string_functions.hpp"
 
 #define RequestHandlerParams           \
     drogon::HttpRequestPtr const &req, \
@@ -44,12 +45,14 @@ void registerApi()
 
                                                                             // Create a task to run the file upload logic in a separate thread
                                                                             std::thread([req, callback]() {
+                                                                                auto subDomain = ok::utils::string::getLastThirdSegment(req->getHeader("host"));
 
                                                                                 jsoncons::ojson args{};
+                                                                                auto session = ok::smart_actor::connection::Session{-1, subDomain ,1104};
 
                                                                                 mg::Client::Params params;
                                                                                 params.host = "localhost";
-                                                                                params.port = global_var::mg_port;
+                                                                                params.port = session.mg_port;
                                                                                 params.use_ssl = false;
 
                                                                                 // create new connection:
@@ -60,7 +63,7 @@ void registerApi()
                                                                                 }
 
                                                                                 jsoncons::ojson result =
-                                                                                    ok::db::get::getInitialData(args, mgClient, ok::smart_actor::connection::Session{});
+                                                                                    ok::db::get::getInitialData(args, mgClient, session);
 
                                                                                 auto resp = drogon::HttpResponse::newHttpResponse();
                                                                                 resp->setBody(result.to_string());
@@ -79,6 +82,9 @@ void registerApi()
 
                                                                             // Create a task to run the file upload logic in a separate thread
                                                                             std::thread([req, callback]() {
+                                                                                auto subDomain = ok::utils::string::getLastThirdSegment(req->getHeader("host"));
+                                                                                auto session = ok::smart_actor::connection::Session{-1, subDomain,1104};
+
                                                                                 auto event = jsoncons::ojson::array();
                                                                                 event.push_back("post");
                                                                                 event.push_back("mutate");
@@ -87,7 +93,7 @@ void registerApi()
 
                                                                                 mg::Client::Params params;
                                                                                 params.host = "localhost";
-                                                                                params.port = global_var::mg_port;
+                                                                                params.port = session.mg_port;
                                                                                 params.use_ssl = false;
 
                                                                                 // create new connection:
@@ -303,7 +309,7 @@ std::string getFileName(std::string const &key,
     {
         return "";
     }
-    if (ok::db::getIdFromResponse(*maybeResult) == -1)
+    if (ok::db::getIdFromMGResponse(*maybeResult) == -1)
     {
         return "";
     }
@@ -366,7 +372,7 @@ std::tuple<ErrorMsg, VertexId> saveFileToDatabase(
     {
         return {error, {}};
     }
-    if (ok::db::getIdFromResponse(*maybeResult) != -1)
+    if (ok::db::getIdFromMGResponse(*maybeResult) != -1)
     {
         return {"File already exist", -1};
     }
@@ -388,13 +394,13 @@ std::tuple<ErrorMsg, VertexId> saveFileToDatabase(
         return {error2, -1};
     }
 
-    auto userId = ok::db::getIdFromResponse(*maybeResult2);
+    auto userId = ok::db::getIdFromMGResponse(*maybeResult2);
     if (userId == -1)
     {
         return {"cant save new file to database", -1};
     }
     else
-        return {"", ok::db::getIdFromResponse(*maybeResult2)};
+        return {"", ok::db::getIdFromMGResponse(*maybeResult2)};
 }
 std::tuple<ErrorMsg, VertexId> saveTo(
     drogon::HttpFile const &file,

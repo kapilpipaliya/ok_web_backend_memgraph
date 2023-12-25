@@ -1,6 +1,6 @@
 #include "db/mutate_functions.hpp"
 #include "jsoncons/json_encoder2.hpp"
-#include "utils/json_functions.hpp"
+#include "lib/json_functions.hpp"
 #include "utils/BatchArrayMessage.hpp"
 #include "third_party/mgclient/src/mgvalue.h"
 #include "db/mgclientPool.hpp"
@@ -295,8 +295,7 @@ jsoncons::ojson mutate_data(
                     {
                         auto oldId =
                             mutationObject["insert"]["id"].as<int>();
-                        auto id =
-                            ok::db::getIdFromResponse(*maybeResult);
+                        auto id = ok::db::getIdFromMGResponse(*maybeResult);
                         clientToServerVertexIdMap.emplace(
                             std::pair{oldId, id});
                         jsoncons::ojson insertResult;
@@ -514,7 +513,7 @@ jsoncons::ojson mutate_data(
                         auto oldEdgeId =
                             mutationObject["insertEdge"]["id"]
                                 .as<int>();
-                        auto id = ok::db::getIdFromRelationshipResponse(
+                        auto id = ok::db::getIdFromMGRelationshipResponse(
                             *maybeResult);
                         clientToServerEdgeIdMap.emplace(
                             std::pair{oldEdgeId, id});

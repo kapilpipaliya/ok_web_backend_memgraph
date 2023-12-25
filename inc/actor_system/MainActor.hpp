@@ -7,11 +7,15 @@ namespace ok::smart_actor
 {
 namespace supervisor
 {
+using SubDomain  = std::string;
 struct mainActorState
 {
   static inline constexpr char const *name = "main-actor";
-  std::unordered_map<::drogon::WebSocketConnectionPtr, ws_connector_actor_int> oldActorMap;
-  // std::unordered_map<::drogon::WebSocketConnectionPtr, ws_connector_v8_actor_int> v8ActorMap;
+  std::unordered_map<::drogon::WebSocketConnectionPtr, ws_connector_actor_int> wsPtrToWsActorMap;
+  std::unordered_map<SubDomain, std::set<ws_connector_actor_int>> subDomainToWsActorListMap;
+  std::unordered_map<SubDomain, sync_actor_int> subDomainToSyncActorMap;
+//  inline ;
+
 };
 using MainActorPointer = main_actor_int::stateful_pointer<mainActorState>;
 main_actor_int::behavior_type MainActor(MainActorPointer self);

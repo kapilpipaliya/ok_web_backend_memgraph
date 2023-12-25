@@ -4,23 +4,18 @@
 #include <jsoncons/json.hpp>
 #include "db/Session.hpp"
 
-// #include "Endpoint/ConnectionInfo.h"
-//#include "caf/io/middleman.hpp"
-//#include "tsl/ordered_map.h"
-
 CAF_BEGIN_TYPE_ID_BLOCK(okproject, first_custom_type_id)
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(drogon::WebSocketConnectionPtr)
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(drogon::WebSocketMessageType)
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(jsoncons::ojson)
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(ok::smart_actor::connection::Session)
 
-CAF_ADD_ATOM(okproject, conn_exit_old_atom);
 CAF_ADD_ATOM(okproject, conn_exit_atom);
 CAF_ADD_ATOM(okproject, shutdown_atom);
 CAF_ADD_ATOM(okproject, logout_atom);
 CAF_ADD_ATOM(okproject, send_email_atom);
 CAF_ADD_ATOM(okproject, spawn_and_monitor_atom);
-CAF_ADD_ATOM(okproject, save_old_wsconnptr_atom);
+CAF_ADD_ATOM(okproject, save_wsconnptr_atom);
 CAF_ADD_ATOM(okproject, pass_to_ws_connection_atom);
 CAF_ADD_ATOM(okproject, session_clean_atom);
 CAF_ADD_ATOM(okproject, set_context_atom);
@@ -29,6 +24,7 @@ CAF_ADD_ATOM(okproject, get_session_atom);
 CAF_ADD_ATOM(okproject, create_atom);
 CAF_ADD_ATOM(okproject, set_atom);
 CAF_ADD_ATOM(okproject, remove_atom);
+
 CAF_ADD_TYPE_ID(okproject, (drogon::WebSocketConnectionPtr))
 CAF_ADD_TYPE_ID(okproject, (drogon::WebSocketMessageType))
 CAF_ADD_TYPE_ID(okproject, (jsoncons::ojson))
@@ -47,9 +43,9 @@ using ws_connector_actor_int = caf::typed_actor<caf::result<void>(drogon::WebSoc
 CAF_ADD_TYPE_ID(okproject, (ws_connector_actor_int))
 
 using main_actor_int = caf::typed_actor<caf::result<void>(spawn_and_monitor_atom),
-                                        caf::result<void>(save_old_wsconnptr_atom, drogon::WebSocketConnectionPtr, std::string, std::string),
+                                        caf::result<void>(save_wsconnptr_atom, drogon::WebSocketConnectionPtr, std::string, std::string),
                                         caf::result<void>(pass_to_ws_connection_atom, drogon::WebSocketConnectionPtr, std::string, drogon::WebSocketMessageType),
-                                        caf::result<void>(conn_exit_old_atom, drogon::WebSocketConnectionPtr),
+                                        caf::result<void>(conn_exit_atom, drogon::WebSocketConnectionPtr),
                                         caf::result<void>(shutdown_atom)>;
 CAF_ADD_TYPE_ID(okproject, (main_actor_int))
 
@@ -68,6 +64,7 @@ using mutation_actor_int = caf::typed_actor<
 CAF_ADD_TYPE_ID(okproject, (mutation_actor_int))
 
 CAF_END_TYPE_ID_BLOCK(okproject)
+
 #define CONN_EXIT                            \
   [=](conn_exit_atom)                        \
   {                                          \
@@ -81,7 +78,7 @@ namespace supervisor
 inline std::unique_ptr<caf::actor_system_config> cfg;
 inline std::unique_ptr<caf::actor_system> actorSystem;
 inline main_actor_int mainActor;
-inline sync_actor_int syncActor;
+
 void initialiseMainActor(int argc, char *argv[]) noexcept;
 std::string getReasonString(caf::error &err) noexcept;
 using exception_handler = std::function<caf::error(caf::scheduled_actor *, std::exception_ptr &)>;

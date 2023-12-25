@@ -4,11 +4,12 @@
 #include "jwt/jwt.hpp"
 #include "utils/BatchArrayMessage.hpp"
 #include "utils/html_functions.hpp"
-#include "utils/json_functions.hpp"
-#include "utils/mg_helper.hpp"
+#include "lib/json_functions.hpp"
+#include "lib/mg_helper.hpp"
 #include "utils/time_functions.hpp"
-
-int ok::db::auth::getMemberKeyFromJwt(std::string const &jwtEncodedCookie)
+namespace ok::db::auth
+{
+int getMemberKeyFromJwt(std::string const &jwtEncodedCookie)
 {
     int memberKey{-1};
     if (jwtEncodedCookie.empty())
@@ -23,7 +24,7 @@ int ok::db::auth::getMemberKeyFromJwt(std::string const &jwtEncodedCookie)
     return memberKey;
 }
 
-std::tuple<ErrorMsg, int> ok::db::auth::registerFn(jsoncons::ojson const &o)
+std::tuple<ErrorMsg, int> registerFn(jsoncons::ojson const &o)
 {
     if (jsoncons::ObjectMemberIsObject(o, "body"))
     {
@@ -44,7 +45,7 @@ std::tuple<ErrorMsg, int> ok::db::auth::registerFn(jsoncons::ojson const &o)
     {
         return {error, {}};
     }
-    if (ok::db::getIdFromResponse(*maybeResult) != -1)
+    if (ok::db::getIdFromMGResponse(*maybeResult) != -1)
     {
         return {"Email Adress already exist", -1};
     }
@@ -64,14 +65,14 @@ std::tuple<ErrorMsg, int> ok::db::auth::registerFn(jsoncons::ojson const &o)
         return {error2, -1};
     }
 
-    auto userId = ok::db::getIdFromResponse(*maybeResult2);
+    auto userId = ok::db::getIdFromMGResponse(*maybeResult2);
     if (userId == -1)
         return {"cant set new password", -1};
     else
-        return {"", ok::db::getIdFromResponse(*maybeResult2)};
+        return {"", ok::db::getIdFromMGResponse(*maybeResult2)};
 }
 
-std::tuple<ErrorMsg, int> ok::db::auth::login(const jsoncons::ojson &o)
+std::tuple<ErrorMsg, int> login(const jsoncons::ojson &o)
 {
     if (jsoncons::ObjectMemberIsObject(o, "body"))
     {
@@ -96,11 +97,10 @@ std::tuple<ErrorMsg, int> ok::db::auth::login(const jsoncons::ojson &o)
         return {error, -1};
     }
 
-    return {"", ok::db::getIdFromResponse(*maybeResult)};
+    return {"", ok::db::getIdFromMGResponse(*maybeResult)};
 }
 
-std::tuple<int, jsoncons::ojson> ok::db::auth::loginJwt(
-    std::string const &jwtEncoded)
+std::tuple<int, jsoncons::ojson> loginJwt(std::string const &jwtEncoded)
 {
     auto memberKey = db::auth::getMemberKeyFromJwt(jwtEncoded);
     if (memberKey == -1)
@@ -109,7 +109,7 @@ std::tuple<int, jsoncons::ojson> ok::db::auth::loginJwt(
     }
     else
     {
-        auto [error, member] = ok::db::auth::user(memberKey);
+        auto [error, member] = user(memberKey);
         if (error.empty())
         {
             return {member["id"].as<int>(), member};
@@ -121,9 +121,8 @@ std::tuple<int, jsoncons::ojson> ok::db::auth::loginJwt(
     }
 }
 // wip
-std::tuple<ErrorMsg, std::string> ok::db::auth::change_password(
-    VertexId const &memberKey,
-    jsoncons::ojson const &o)
+std::tuple<ErrorMsg, std::string> change_password(VertexId const &memberKey,
+                                                  jsoncons::ojson const &o)
 {
     if (jsoncons::ObjectMemberIsObject(o, "body"))
     {
@@ -155,7 +154,7 @@ std::tuple<ErrorMsg, std::string> ok::db::auth::change_password(
     {
         return {error, ""};
     }
-    if (ok::db::getIdFromResponse(*maybeResult) == -1)
+    if (ok::db::getIdFromMGResponse(*maybeResult) == -1)
     {
         return {"Old password is not correct", ""};
     }
@@ -174,20 +173,23 @@ std::tuple<ErrorMsg, std::string> ok::db::auth::change_password(
         return {error2, ""};
     }
 
-    auto userId = ok::db::getIdFromResponse(*maybeResult2);
+    auto userId = ok::db::getIdFromMGResponse(*maybeResult2);
     if (userId == -1)
         return {"cant set new password", ""};
     else
         return {"", "Success"};
 }
-namespace {
-jsoncons::ojson getRolesOfUser(int const &memberKey){
+namespace
+{
+jsoncons::ojson getRolesOfUser(int const &memberKey)
+{
     if (!memberKey)
         return jsoncons::ojson::null();
 
     ok::db::MGParams p{{"id", mg_value_make_integer(memberKey)}};
 
-    std::string query{"MATCH (c:User)-[r:UserRole]->(n)  WHERE ID(c) = $id return COLLECT(DISTINCT id(n));"};
+    std::string query{
+        "MATCH (c:User)-[r:UserRole]->(n)  WHERE ID(c) = $id return COLLECT(DISTINCT id(n));"};
     const auto [error, maybeResult] = mgCall(query, p);
     if (!error.empty())
     {
@@ -210,7 +212,7 @@ jsoncons::ojson getRolesOfUser(int const &memberKey){
     return jsoncons::ojson::null();
 }
 }
-std::tuple<ErrorMsg, jsoncons::ojson> ok::db::auth::user(int const memberKey)
+std::tuple<ErrorMsg, jsoncons::ojson> user(int const memberKey)
 {
     if (!memberKey)
         return {"Not Logged In", jsoncons::ojson::null()};
@@ -224,7 +226,7 @@ std::tuple<ErrorMsg, jsoncons::ojson> ok::db::auth::user(int const memberKey)
     {
         return {error, jsoncons::ojson::null()};
     }
-    if (ok::db::getIdFromResponse(*maybeResult) == -1)
+    if (ok::db::getIdFromMGResponse(*maybeResult) == -1)
     {
         return {std::string{"User"} + std::to_string(memberKey) + " Not Found",
                 jsoncons::ojson::null()};
@@ -242,4 +244,51 @@ std::tuple<ErrorMsg, jsoncons::ojson> ok::db::auth::user(int const memberKey)
             return {"user not exist", jsoncons::ojson::null()};
     }
     return {"user not exist", jsoncons::ojson::null()};
+}
+int getSubDomainPort(std::string const &subDomain)
+{
+    if (subDomain.empty()) {
+        return -1;
+    }
+    // make a mg call to get port
+    std::string query{"MATCH  (n {subDomain: '" + subDomain + "'}) RETURN n"};
+    
+    mg::Client::Params params;
+    params.host = "localhost";
+    params.port = 1102;
+    params.use_ssl = false;
+    
+    auto mgClient = mg::Client::Connect(params);
+    if (!mgClient)
+    {
+        LOG_ERROR << "Failed to connect MG Server.";
+        return -1;
+    }
+    
+    if (!mgClient->Execute(query))
+    {
+        LOG_ERROR << "Failed to execute query!" << query << " "
+                  << mg_session_error(mgClient->session_);
+        return -1;
+    }
+    try
+    {
+        const auto maybeResult = mgClient->FetchAll();
+        if (maybeResult)
+            for (auto &row : *maybeResult)
+                for (auto &matchPart : row)
+                    if (matchPart.type() == mg::Value::Type::Node) {
+                        auto port = matchPart.ValueNode().properties()["a"];
+                        if (port.type() == mg::Value::Type::Int) {
+                            return port.ValueInt();
+                        }
+                        return -1;
+                    }
+    }
+    catch (mg::ClientException e)
+    {
+        LOG_ERROR << e.what();
+        return -1;
+    }
+}
 }

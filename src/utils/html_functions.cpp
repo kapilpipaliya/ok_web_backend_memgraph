@@ -10,13 +10,6 @@ namespace ok::utils
 {
 namespace html
 {
-std::string getSubdomain(std::string const& host)
-{
-  std::string regex_ = "(\\w+).chat.";
-  std::smatch match;
-  if (std::regex_search(host, match, std::regex(regex_))) { return match[1]; }
-  return "";
-}
 bool isMobile(std::string const& userAgent)
 {
   //    String userAgent = request.headers.get("user-agent").value();

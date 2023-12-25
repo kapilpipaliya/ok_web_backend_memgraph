@@ -57,7 +57,7 @@ class Client {
  public:
   struct Params {
     std::string host = "127.0.0.1";
-    uint16_t port = global_var::mg_port;
+    uint16_t port = 0;
     std::string username = "";
     std::string password = "";
     bool use_ssl = false;

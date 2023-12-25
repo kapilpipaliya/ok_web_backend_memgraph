@@ -1,5 +1,6 @@
 #pragma once
 #include <regex>
+
 namespace ok::utils::string
 {
 // bool matched = regex_search(s, std::regex("[A-Za-z]")) && regex_search(s, std::regex("[0-9]"));
@@ -22,25 +23,24 @@ inline bool ValidateEmail(std::string email)
   if (regex_match(email, std::regex(officialRegex))) return true;
   return false;
 }
-inline bool validateSubdomain(std::string const &url)
-{
-  // https://stackoverflow.com/a/7930801/4372670
-  auto regex_ = R"(^\w+$$)";
-  if (regex_match(url, std::regex(regex_))) return true;
-  return false;
-}
-/*
-void readFastAFile(std::vector<std::string> &reads, std::vector<std::string>
-&headers)
-{
-    std::string header;
-    std::string read;
+inline std::string getLastThirdSegment(const std::string &input) {
+  std::istringstream iss(input);
 
-while(std::getline(ifs, header) && std::getline(ifs, read))
-{
-  headers.push_back(header);
-  reads.push_back(read);
+  std::vector<std::string> segments;
+
+  // Split the string using '.'
+  for (std::string segment; std::getline(iss, segment, '.');) {
+      segments.push_back(segment);
+  }
+
+  // Check if the result length is greater than 2
+  if (segments.size() > 2) {
+      // Return the result from the last third
+      return segments[segments.size() - 3];
+  } else {
+      // Return an empty string if the length is not greater than 2
+      return "";
+  }
 }
-}
-*/
+
 }  // namespace ok::utils::string

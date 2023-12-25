@@ -16,7 +16,7 @@ TEST(RegistrationTest, BasicAssertions)
 {
     mg::Client::Params params;
     params.host = "localhost";
-    params.port = global_var::mg_port;
+    params.port = 1104;
     params.use_ssl = false;
     auto client = mg::Client::Connect(params);
 

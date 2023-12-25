@@ -3,7 +3,7 @@
 #include "db/mgclientPool.hpp"
 #include "third_party/mgclient/src/mgvalue.h"
 #include "utils/BatchArrayMessage.hpp"
-#include "utils/mg_helper.hpp"
+#include "lib/mg_helper.hpp"
 #include "utils/time_functions.hpp"
 #include "db/get_functions.hpp"
 namespace ok::smart_actor
@@ -72,7 +72,7 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
                     std::make_pair(connectionActor, args));
             }
 
-            if (!self->state.mgClient && !ok::db::get::reconnect(self->state.mgClient)) {
+            if (!self->state.mgClient && !ok::db::get::reconnect(self->state.mgClient, session.mg_port)) {
                 LOG_ERROR << "Failed to connect MG Server. Host=" << self->state.params.host << " Port=" << self->state.params.port;
                 return;
             }

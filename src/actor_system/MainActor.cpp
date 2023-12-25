@@ -46,7 +46,7 @@ main_actor_int::behavior_type MainActor(MainActorPointer self)
     return {[=](spawn_and_monitor_atom) {
                 impl::spawnAndMonitorSuperActor(self);
             },
-            [=](save_old_wsconnptr_atom,
+            [=](save_wsconnptr_atom,
                 drogon::WebSocketConnectionPtr const &wsConnPtr,
                 std::string const &jwtEncoded,
                 std::string const &firstSubDomain) {
@@ -64,7 +64,7 @@ main_actor_int::behavior_type MainActor(MainActorPointer self)
                                               std::move(message),
                                               type);
             },
-            [=](conn_exit_old_atom,
+            [=](conn_exit_atom,
                 drogon::WebSocketConnectionPtr const &wsConnPtr) {
                 impl::connectionExit(self, wsConnPtr);
             },
@@ -98,16 +98,26 @@ void spanAndSaveConnectionActor(MainActorPointer act,
     ws_connector_actor_int connectionActor =
         act->spawn(ok::smart_actor::connection::WsControllerActor);
     act->monitor(connectionActor);  // self will send message when it down
+
+    if (!act->state.subDomainToSyncActorMap.contains(firstSubDomain)) {
+        auto syncActor = act->spawn<caf::detached>(ok::smart_actor::supervisor::SyncActor);
+        act->monitor(syncActor);
+        act->state.subDomainToSyncActorMap.emplace(firstSubDomain, syncActor);
+    }
+
+
+
+
     act->send(connectionActor, wsConnPtr, jwtEncoded, firstSubDomain);
-    act->state.oldActorMap.insert({wsConnPtr, std::move(connectionActor)});
+    act->state.wsPtrToWsActorMap.insert({wsConnPtr, std::move(connectionActor)});
 }
 void passToWsControllerActor(MainActorPointer act,
                              drogon::WebSocketConnectionPtr const &wsConnPtr,
                              std::string &&message,
                              drogon::WebSocketMessageType const &type) noexcept
 {
-    if (auto const &it = act->state.oldActorMap.find(wsConnPtr);
-        it == std::end(act->state.oldActorMap))
+    if (auto const &it = act->state.wsPtrToWsActorMap.find(wsConnPtr);
+        it == std::end(act->state.wsPtrToWsActorMap))
     {
         LOG_ERROR << "This should never happen when passing message to the "
                      "connection.";
@@ -119,8 +129,8 @@ void passToWsControllerActor(MainActorPointer act,
 void connectionExit(MainActorPointer act,
                     drogon::WebSocketConnectionPtr const &wsConnPtr)
 {
-    if (auto const &it = act->state.oldActorMap.find(wsConnPtr);
-        it == std::end(act->state.oldActorMap))
+    if (auto const &it = act->state.wsPtrToWsActorMap.find(wsConnPtr);
+        it == std::end(act->state.wsPtrToWsActorMap))
     {
         LOG_ERROR << "Not Possible";
     }
@@ -130,10 +140,10 @@ void connectionExit(MainActorPointer act,
         act->send<caf::message_priority::high>(connectionActor,
                                                conn_exit_atom_v);
         act->demonitor(connectionActor.address());
-        act->send(ok::smart_actor::supervisor::syncActor,
-                  conn_exit_atom_v,
-                  connectionActor);
-        act->state.oldActorMap.erase(it);
+//        act->send(ok::smart_actor::supervisor::syncActor,
+//                  conn_exit_atom_v,
+//                  connectionActor);
+        act->state.wsPtrToWsActorMap.erase(it);
     }
 }
 void shutdownNow(MainActorPointer act) noexcept

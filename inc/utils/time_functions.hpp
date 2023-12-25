@@ -59,6 +59,3 @@ inline double now()
 }
 }  // namespace impl
 }  // namespace ok::utils::time
-// date::remote_download("2019c");
-// date::remote_install("2019c");
-// auto &a = date::get_tzdb();
