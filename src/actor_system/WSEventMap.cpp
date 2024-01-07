@@ -25,19 +25,20 @@ namespace impl
 void addAuthRoutes()
 {
     routeFunctions["register"] = [](RouteArgs) {
-        if (auto [error, userId] = ok::db::auth::registerFn(args);
+        if (auto [error, userId] = ok::db::auth::registerFn(args, session.subDomain, session.mg_port);
             error.empty() && userId != -1)
         {
             session.memberKey = userId;
             ok::smart_actor::connection::addSuccess(resultMsg, event);
             ok::smart_actor::connection::addJwtCookie(
                 resultMsg,
-                {{"memberKey", std::to_string(session.memberKey)},
+                {{"subDomain", session.subDomain},
+                 {"memberKey", std::to_string(session.memberKey)},
                  {"createdAt",
                   std::to_string(utils::time::getEpochMilliseconds())}},
                 60 * 60 * 24);
             ok::smart_actor::connection::addCurrentMember(resultMsg,
-                                                          session.memberKey);
+                                                          session.memberKey, session.mg_port);
         }
         else
         {
@@ -46,19 +47,19 @@ void addAuthRoutes()
         }
     };
     routeFunctions["login"] = [](RouteArgs) {
-        if (auto [error, userId] = ok::db::auth::login(args);
+        if (auto [error, userId] = ok::db::auth::login(args, session.mg_port);
             error.empty() && userId != -1)
         {
             session.memberKey = userId;
             ok::smart_actor::connection::addSuccess(resultMsg, event);
             ok::smart_actor::connection::addJwtCookie(
                 resultMsg,
-                {{"memberKey", std::to_string(session.memberKey)},
+                {{"subDomain", session.subDomain},{"memberKey", std::to_string(session.memberKey)},
                  {"createdAt",
                   std::to_string(utils::time::getEpochMilliseconds())}},
                 60 * 60 * 24);
             ok::smart_actor::connection::addCurrentMember(resultMsg,
-                                                          session.memberKey);
+                                                          session.memberKey, session.mg_port);
         }
         else
         {
@@ -100,7 +101,7 @@ void addAuthRoutes()
     // wip
     routeFunctions["change_password"] = [](RouteArgs) {
         if (auto [error, successMsg] =
-                ok::db::auth::change_password(session.memberKey, args);
+                ok::db::auth::change_password(session.memberKey, session.mg_port, args);
             error.empty())
             ok::smart_actor::connection::addSuccess(resultMsg, event);
         else
@@ -117,7 +118,7 @@ void addAuthRoutes()
                                                     "Not Logged In");
             return;
         }
-        if (auto [error, user] = ok::db::auth::user(session.memberKey);
+        if (auto [error, user] = ok::db::auth::user(session.memberKey, session.mg_port);
             error.empty())
         {
             ok::smart_actor::connection::addEventAndJson(
@@ -136,7 +137,7 @@ void addAuthRoutes()
         session.memberKey = -1;
         ok::smart_actor::connection::addSuccess(resultMsg, event);
         ok::smart_actor::connection::addJwtCookie(
-            resultMsg, {{"memberKey", std::to_string(-1)}}, 60 * 60 * 24);
+            resultMsg, {{"subDomain", session.subDomain},{"memberKey", std::to_string(-1)}}, 60 * 60 * 24);
     };
     routeFunctions["confirm_email"] = [](RouteArgs) {
 
@@ -194,15 +195,6 @@ void addMutateRoutes()
 }
 void addHelperRoutes()
 {
-    routeFunctions["restart_server"] = [](RouteArgs) {
-        // std::exit(1);
-        jsoncons::ojson result = jsoncons::ojson::array();
-        jsoncons::ojson one = jsoncons::ojson::array();
-        one.push_back(event);
-        one.push_back(123);
-        result.push_back(one);
-        currentActor->send(currentActor, caf::forward_atom_v, result);
-    };
     routeFunctions["test_mail"] = [](RouteArgs) {};
     routeFunctions["read_log"] = [](RouteArgs) {
         auto content = pystring::read_all("./drogon.log");

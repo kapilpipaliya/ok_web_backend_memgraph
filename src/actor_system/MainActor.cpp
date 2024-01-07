@@ -166,77 +166,8 @@ void shutdownNow(MainActorPointer act) noexcept
       act->demonitor(ok::smart_actor::supervisor::translationListActor.address());
       act->send(ok::smart_actor::supervisor::translationListActor,
       conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::sessionListActor.address());
-      act->send(ok::smart_actor::supervisor::sessionListActor,
-      conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::confirmListActor.address());
-      act->send(ok::smart_actor::supervisor::confirmListActor,
-      conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::colorListActor.address());
-      act->send(ok::smart_actor::supervisor::colorListActor, conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::permissionListActor.address());
-      act->send(ok::smart_actor::supervisor::permissionListActor,
-      conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::roleListActor.address());
-      act->send(ok::smart_actor::supervisor::roleListActor, conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::templateListActor.address());
-      act->send(ok::smart_actor::supervisor::templateListActor,
-      conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::menuListActor.address());
-      act->send(ok::smart_actor::supervisor::menuListActor, conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::nodeListActor.address());
-      act->send(ok::smart_actor::supervisor::nodeListActor, conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::edgeListActor.address());
-      act->send(ok::smart_actor::supervisor::edgeListActor, conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::attributeListActor.address());
-      act->send(ok::smart_actor::supervisor::attributeListActor,
-      conn_exit_atom_v);
-      //
       act->demonitor(ok::smart_actor::supervisor::emailMutateActor.address());
       act->send(ok::smart_actor::supervisor::emailMutateActor,
-      conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::registerMutateActor.address());
-      act->send(ok::smart_actor::supervisor::registerMutateActor,
-      conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::confirmMutateActor.address());
-      act->send(ok::smart_actor::supervisor::confirmMutateActor,
-      conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::memberRegisterMutateActor.address());
-      act->send(ok::smart_actor::supervisor::memberRegisterMutateActor,
-      conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::logoutMutateActor.address());
-      act->send(ok::smart_actor::supervisor::logoutMutateActor,
-      conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::userMutateActor.address());
-      act->send(ok::smart_actor::supervisor::userMutateActor, conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::schemaMutateActor.address());
-      act->send(ok::smart_actor::supervisor::schemaMutateActor,
-      conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::translationMutateActor.address());
-      act->send(ok::smart_actor::supervisor::translationMutateActor,
-      conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::sessionMutateActor.address());
-      act->send(ok::smart_actor::supervisor::sessionMutateActor,
-      conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::colorMutateActor.address());
-      act->send(ok::smart_actor::supervisor::colorMutateActor,
-      conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::permissionMutateActor.address());
-      act->send(ok::smart_actor::supervisor::permissionMutateActor,
-      conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::roleMutateActor.address());
-      act->send(ok::smart_actor::supervisor::roleMutateActor, conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::menuMutateActor.address());
-      act->send(ok::smart_actor::supervisor::menuMutateActor, conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::nodeMutateActor.address());
-      act->send(ok::smart_actor::supervisor::nodeMutateActor, conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::edgeMutateActor.address());
-      act->send(ok::smart_actor::supervisor::edgeMutateActor, conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::attributeMutateActor.address());
-      act->send(ok::smart_actor::supervisor::attributeMutateActor,
-      conn_exit_atom_v);
-      act->demonitor(ok::smart_actor::supervisor::templateMutateActor.address());
-      act->send(ok::smart_actor::supervisor::templateMutateActor,
       conn_exit_atom_v);
       */
     act->unbecome();

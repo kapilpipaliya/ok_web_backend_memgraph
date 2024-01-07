@@ -1,13 +1,9 @@
 #include "utils/BatchArrayMessage.hpp"
 #include <trantor/utils/Logger.h>
 #include "db/auth_fns.hpp"
-#include "db/mgclientPool.hpp"
 #include "utils/html_functions.hpp"
-// #include "MutateSchema.hpp"
-#include "drogon/Cookie.h"
-namespace ok::smart_actor
-{
-namespace connection
+
+namespace ok::smart_actor::connection
 {
 jsoncons::ojson wsMessageBase() noexcept
 {
@@ -67,9 +63,9 @@ jsoncons::ojson addFailure(jsoncons::ojson &array,
 }
 
 jsoncons::ojson addCurrentMember(jsoncons::ojson &array,
-                                 VertexId const &memberKey) noexcept
+                                 VertexId const &memberKey, int mgPort) noexcept
 {
-    auto [error, user] = ok::db::auth::user(memberKey);
+    auto [error, user] = ok::db::auth::user(memberKey, mgPort);
     if (!error.empty())
     {
         LOG_ERROR << error;
@@ -170,5 +166,5 @@ jsoncons::ojson addLogout(jsoncons::ojson &array) noexcept
     LOG_ERROR << "reason: " << e.what();
   }
 }*/
-}  // namespace connection
-}  // namespace ok::smart_actor
+} // namespace ok::smart_actor::connection
+

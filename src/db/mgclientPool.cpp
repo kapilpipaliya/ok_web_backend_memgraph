@@ -59,32 +59,34 @@ int getIdFromMGRelationshipResponse(
     return userId;
 }
 std::pair<std::string, std::optional<std::vector<std::vector<mg::Value>>>>
-mgCall(std::string const &query, ok::db::MGParams &p)
+mgCall(std::string const &query, ok::db::MGParams &p, int mgPort)
 {
-    auto client = mg::Client::Connect(mg::Client::Params{});
-    if (!client)
+    auto mgClientParams = mg::Client::Params{};
+    mgClientParams.port = mgPort;
+    auto ngClient = mg::Client::Connect(mgClientParams);
+    if (!ngClient)
     {
         return {"Failed to connect MG Server", {}};
     }
-    if (!client->Execute(query, p.asConstMap()))
+    if (!ngClient->Execute(query, p.asConstMap()))
     {
         auto error = std::string{};
         error += "Failed to execute query!" + query + " " +
-                 mg_session_error(client->session_);
+                 mg_session_error(ngClient->session_);
         // TODO: report error to db, reason, status code
         // everything;
         return {error, {}};
     }
     try
     {
-        const auto maybeResult = client->FetchAll();
+        const auto maybeResult = ngClient->FetchAll();
         return {"", maybeResult};
     }
     catch (mg::ClientException e)
     {
         // TODO: report error to db, reason, status code
         // everything;
-        client->RollbackTransaction();
+        ngClient->RollbackTransaction();
 
         auto error =
             std::string{

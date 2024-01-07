@@ -13,14 +13,14 @@ namespace ok::db::get
 void fetchNodesAPI(const std::string& query,
                    ok::db::MGParams &p,
                    jsoncons::ojson &nodes,
-                   std::unique_ptr<mg::Client> &connPtr, int port)
+                   std::unique_ptr<mg::Client> &connPtr, int mgPort)
 {
     if (!connPtr->Execute(query.c_str(), p.asConstMap()))
     {
         LOG_ERROR << "Failed to execute query!" << query << " "
                   << mg_session_error(connPtr->session_);
-        reconnect(connPtr, port);
-        fetchNodesAPI(query, p, nodes, connPtr, port);
+        reconnect(connPtr, mgPort);
+        fetchNodesAPI(query, p, nodes, connPtr, mgPort);
     }
     try
     {
@@ -38,7 +38,7 @@ void fetchNodesAPI(const std::string& query,
         result["error"] = true;
         result["message"] = e.what();
         LOG_ERROR << e.what();
-        reconnect(connPtr, port);
+        reconnect(connPtr, mgPort);
         // only refetch if needed.
         // fetchNodesAPI(query, nodes, mgClient);
     }
@@ -47,14 +47,14 @@ void fetchNodesAPI(const std::string& query,
 void fetchRelationshipsAPI(const std::string& query,
                            ok::db::MGParams &p,
                            jsoncons::ojson &relationships,
-                           std::unique_ptr<mg::Client> &connPtr, int port)
+                           std::unique_ptr<mg::Client> &connPtr, int mgPort)
 {
     if (!connPtr->Execute(query, p.asConstMap()))
     {
         LOG_ERROR << "Failed to execute query!" << query << " "
                   << mg_session_error(connPtr->session_);
-        reconnect(connPtr, port);
-        fetchRelationshipsAPI(query, p, relationships, connPtr, port);
+        reconnect(connPtr, mgPort);
+        fetchRelationshipsAPI(query, p, relationships, connPtr, mgPort);
     }
     try
     {
@@ -72,7 +72,7 @@ void fetchRelationshipsAPI(const std::string& query,
         result["error"] = true;
         result["message"] = e.what();
         LOG_ERROR << e.what();
-        reconnect(connPtr, port);
+        reconnect(connPtr, mgPort);
     }
 }
 
@@ -199,7 +199,7 @@ jsoncons::ojson getInitialData(
         // get all public nodes:
         ok::db::MGParams p2{};
         auto [error, response] = ok::db::mgCall(
-            getAllNodesWithALabel("Coll", "WHERE n.public = true"), p2);
+            getAllNodesWithALabel("Coll", "WHERE n.public = true"), p2, session.mg_port);
         if (!error.empty())
         {
             LOG_ERROR << error;
@@ -284,15 +284,15 @@ jsoncons::ojson getInitialData(
     return result;
 }
 bool reconnect(
-    std::unique_ptr<mg::Client> &connPtr, int port)
+    std::unique_ptr<mg::Client> &connPtr, int mgPort)
 {
     connPtr->Finalize();
     mg::Client::Params params;
     params.host = "localhost";
-    params.port = port;
+    params.port = mgPort;
     params.use_ssl = false;
-    auto client = mg::Client::Connect(params);
-    connPtr = std::move(client);
+    auto mgClient = mg::Client::Connect(params);
+    connPtr = std::move(mgClient);
     if (connPtr)
     {
         return true;

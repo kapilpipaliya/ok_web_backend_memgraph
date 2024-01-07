@@ -94,61 +94,51 @@ std::string isProperEdgeFormat(jsoncons::ojson edge)
     return "";
 }
 
-jsoncons::ojson mutate_data(
-    const WsEvent &event,
-    const WsArguments &args,
-    std::unique_ptr<mg::Client> &mgClient,
-    const ok::smart_actor::connection::Session &session)
+jsoncons::ojson mutateArgsValidation(const WsEvent &event, const WsArguments &args)
 {
-    std::map<int, int> clientToServerVertexIdMap;
-    std::map<int, int> clientToServerEdgeIdMap;
-    auto responseResult = ok::smart_actor::connection::wsMessageBase();
-
-    
-
-
+    auto responseResult = smart_actor::connection::wsMessageBase();
     if (!args.is_array())
     {
         return ok::smart_actor::connection::addFailure(
-                              responseResult,
-                              event,
-                              "Invalid argument shape, the argument to "
-                              "sync(mutate) must be an array");
+            responseResult,
+            event,
+            "Invalid argument shape, the argument to "
+            "sync(mutate) must be an array");
     }
     for (auto const &txns : args.array_range())
     {
         if (!txns.is_array())
         {
             return ok::smart_actor::connection::addFailure(
-                                  responseResult,
-                                  event,
-                                  "Invalid argument shape, the inner "
-                                  "argument to sync(mutate) must "
-                                  "be an array");
+                responseResult,
+                event,
+                "Invalid argument shape, the inner "
+                "argument to sync(mutate) must "
+                "be an array");
         }
         if (txns.size() != 4)
         {
             return ok::smart_actor::connection::addFailure(
-                    responseResult,
-                    event,
-                    "Invalid argument shape, the inner argument to "
-                    "sync(mutate) must "
-                    "be an array and it should contain 4 elements. "
-                    "first-txnId, second-vertexIdMap, third-EdgeIdMap, "
-                    "fourth-The transactions.");
+                responseResult,
+                event,
+                "Invalid argument shape, the inner argument to "
+                "sync(mutate) must "
+                "be an array and it should contain 4 elements. "
+                "first-txnId, second-vertexIdMap, third-EdgeIdMap, "
+                "fourth-The transactions.");
         }
         if ((!txns[vertexIdMap].is_array() ||
              !txns[edgeIdMap].is_array()))
         {
             return ok::smart_actor::connection::addFailure(
-                    responseResult,
-                    event,
-                    "Invalid argument shape, the inner argument to "
-                    "sync(mutate) must "
-                    "be an array and it should contain 4 elements. "
-                    "first-txnId, second-vertexIdMap, third-EdgeIdMap, "
-                    "fourth-The transactions. vertexIdMap and "
-                    "EdgeIdMap each item is [num, num] tuple");
+                responseResult,
+                event,
+                "Invalid argument shape, the inner argument to "
+                "sync(mutate) must "
+                "be an array and it should contain 4 elements. "
+                "first-txnId, second-vertexIdMap, third-EdgeIdMap, "
+                "fourth-The transactions. vertexIdMap and "
+                "EdgeIdMap each item is [num, num] tuple");
         }
         for (auto const &idmap : txns[vertexIdMap].array_range())
         {
@@ -156,10 +146,10 @@ jsoncons::ojson mutate_data(
                 (!idmap[0].is_int64() || !idmap[1].is_int64()))
             {
                 return ok::smart_actor::connection::addFailure(
-                        responseResult,
-                        event,
-                        "Invalid argument shape, vertexIdMap and "
-                        "EdgeIdMap each item is [num, num] tuple");
+                    responseResult,
+                    event,
+                    "Invalid argument shape, vertexIdMap and "
+                    "EdgeIdMap each item is [num, num] tuple");
             }
         }
         for (auto const &idmap : txns[edgeIdMap].array_range())
@@ -168,10 +158,10 @@ jsoncons::ojson mutate_data(
                 (!idmap[0].is_int64() || !idmap[1].is_int64()))
             {
                 return ok::smart_actor::connection::addFailure(
-                        responseResult,
-                        event,
-                        "Invalid argument shape, vertexIdMap and "
-                        "EdgeIdMap each item is [num, num] tuple");
+                    responseResult,
+                    event,
+                    "Invalid argument shape, vertexIdMap and "
+                    "EdgeIdMap each item is [num, num] tuple");
             }
         }
         for (auto const &mutationObject :
@@ -184,9 +174,9 @@ jsoncons::ojson mutate_data(
                     !mutationObject[key].is_object())
                 {
                     return ok::smart_actor::connection::addFailure(
-                            responseResult,
-                            event,
-                            key + " shape must be an object");
+                        responseResult,
+                        event,
+                        key + " shape must be an object");
                 }
                 if (mutationObject.contains(key))
                 {
@@ -195,9 +185,9 @@ jsoncons::ojson mutate_data(
                     if (!err.empty())
                     {
                         return ok::smart_actor::connection::addFailure(
-                                responseResult,
-                                event,
-                                key + " " + err);
+                            responseResult,
+                            event,
+                            key + " " + err);
                     }
                 }
             }
@@ -212,9 +202,9 @@ jsoncons::ojson mutate_data(
                     !mutationObject[key].is_object())
                 {
                     return ok::smart_actor::connection::addFailure(
-                            responseResult,
-                            event,
-                            key + " shape must be an object");
+                        responseResult,
+                        event,
+                        key + " shape must be an object");
                 }
                 if (mutationObject.contains(key))
                 {
@@ -223,14 +213,31 @@ jsoncons::ojson mutate_data(
                     if (!err.empty())
                     {
                         return ok::smart_actor::connection::addFailure(
-                                responseResult,
-                                event,
-                                key + " " + err);
+                            responseResult,
+                            event,
+                            key + " " + err);
                     }
                 }
             }
         }
     }
+    return responseResult;
+}
+jsoncons::ojson mutate_data(
+    const WsEvent &event,
+    const WsArguments &args,
+    std::unique_ptr<mg::Client> &mgClient,
+    const ok::smart_actor::connection::Session &session)
+{
+    std::map<int, int> clientToServerVertexIdMap;
+    std::map<int, int> clientToServerEdgeIdMap;
+    auto responseResult = smart_actor::connection::wsMessageBase();
+
+    jsoncons::ojson validationResult = mutateArgsValidation(event, args);
+    if (!validationResult.empty()) {
+        return validationResult;
+    }
+
     auto resultTxn = jsoncons::ojson::array();
     for (auto const &txns : args.array_range())
     {
@@ -267,6 +274,7 @@ jsoncons::ojson mutate_data(
                     labels.append(label.as_string());
                 }
                 query.append(labels);
+                // Note: This will not work , if we have to set a nested value.
                 query.append(jsonToMemGraphQueryObject(
                     mutationObject["insert"]["P"]));
                 query.append(") ");
@@ -538,6 +546,7 @@ jsoncons::ojson mutate_data(
                                 e.what());
                 }
             }
+            // Replace Edge Properties:
             if (jsoncons::ObjectMemberIsObject(mutationObject,
                                                "replaceEdge"))
             {
@@ -632,6 +641,7 @@ jsoncons::ojson mutate_data(
                     "merge (s)-[t:");
                 query.append(mutationObject["replaceEdgeStart"]["T"]
                                  .as_string());
+                // In cypher not possible to replace edge endpoints.
                 query.append(
                     "]-> (e)"
                     "set t = properties(r)"
@@ -807,7 +817,7 @@ jsoncons::ojson mutate_data(
             }
         }
         auto o = jsoncons::ojson::array();
-        o.push_back(txns[0]);
+        o.push_back(txns[txnId]);
         o.push_back(txnResult);
         resultTxn.push_back(o);
 

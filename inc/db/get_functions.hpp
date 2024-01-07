@@ -11,5 +11,5 @@ jsoncons::ojson getInitialData(
     const WsArguments &args,
     std::unique_ptr<mg::Client> &mgClient,
     const ok::smart_actor::connection::Session &session);
-bool reconnect(std::unique_ptr<mg::Client> &connPtr, int port);
+bool reconnect(std::unique_ptr<mg::Client> &connPtr, int mgPort);
 }

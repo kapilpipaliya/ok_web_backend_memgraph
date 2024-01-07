@@ -1,8 +1,6 @@
 #include "Api.hpp"
 #include <string>
 #include <filesystem>
-#include "db/mgclientPool.hpp"
-#include "third_party/mgclient/src/mgvalue.h"
 #include "db/auth_fns.hpp"
 #include "utils/time_functions.hpp"
 #define RequestHandlerParams           \
@@ -64,8 +62,13 @@ void registerAuthApi()
     drogon::app().registerHandler(
         "/register",
         [](RequestHandlerParams) {
+            auto subDomain = ok::utils::string::getLastThirdSegment(req->getHeader("host"));
+            auto mgPort = ok::db::auth::getSubDomainMGPort(subDomain);
+            if (subDomain.empty() || mgPort == -1) {
+                return errorResponse("Invalid account", std::move(callback));
+            }
             if (auto [error, userId] = ok::db::auth::registerFn(
-                    jsoncons::ojson::parse(req->body()));
+                    jsoncons::ojson::parse(req->body()), subDomain, mgPort);
                 error.empty())
                 sendLoginCookie(userId, std::move(callback));
             else
@@ -75,8 +78,14 @@ void registerAuthApi()
     drogon::app().registerHandler(
         "/login",
         [](RequestHandlerParams) {
+            auto subDomain = ok::utils::string::getLastThirdSegment(req->getHeader("host"));
+            auto mgPort = ok::db::auth::getSubDomainMGPort(subDomain);
+            if (subDomain.empty() || mgPort == -1) {
+                return errorResponse("Invalid account", std::move(callback));
+            }
             if (auto [error, userId] =
-                    ok::db::auth::login(jsoncons::ojson::parse(req->body()));
+                    ok::db::auth::login(jsoncons::ojson::parse(req->body()),
+                                        mgPort);
                 error.empty())
                 sendLoginCookie(userId, std::move(callback));
             else
@@ -86,13 +95,14 @@ void registerAuthApi()
     drogon::app().registerHandler(
         "/change_password",
         [](RequestHandlerParams) {
-            auto memberKey =
+            auto [subDomain, memberKey] =
                 db::auth::getMemberKeyFromJwt(req->getCookie("jwt"));
-            if (!memberKey)
+            auto mgPort = ok::db::auth::getSubDomainMGPort(subDomain);
+            if (subDomain.empty() || mgPort == -1 || memberKey == -1)
                 return errorResponse("Not Logged In", std::move(callback));
 
             if (auto [error, successMsg] = ok::db::auth::change_password(
-                    memberKey, jsoncons::ojson::parse(req->body()));
+                    memberKey, mgPort, jsoncons::ojson::parse(req->body()));
                 error.empty())
                 return successResponse(successMsg, std::move(callback));
             else
@@ -107,8 +117,12 @@ void registerAuthApi()
             if (jwtEncodedCookie.empty())
                 return errorResponse("Not Logged In", std::move(callback));
 
-            auto memberKey = db::auth::getMemberKeyFromJwt(jwtEncodedCookie);
-            if (auto [error, member] = ok::db::auth::user(memberKey);
+            auto [subDomain, memberKey] = db::auth::getMemberKeyFromJwt(jwtEncodedCookie);
+            auto mgPort = ok::db::auth::getSubDomainMGPort(subDomain);
+            if (subDomain.empty() || mgPort == -1)
+                return errorResponse("Invalid account", std::move(callback));
+
+            if (auto [error, member] = ok::db::auth::user(memberKey, mgPort);
                 error.empty())
                 return successResponse(member["id"].as_string(),
                                        std::move(callback));

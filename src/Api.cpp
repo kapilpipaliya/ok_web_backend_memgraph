@@ -117,97 +117,9 @@ void registerApi()
 
                                   },
                                   {drogon::Get, drogon::Post, drogon::Options});
-    /*drogon::app().registerHandler("/api/chat/drogon",
-                                  [](RequestHandlerParams)
-                                  {
-                                    auto resp1 =
-  drogon::HttpResponse::newHttpResponse(); auto sid = req->getCookie("sid");
-                                    auto urlPart =
-  "_system/okweb/chat/auth/whoami"; auto [er, reason] = system_::foxxApi( req,
-                                        std::move(urlPart),
-                                        [callback](arangodb::rest::RestHandler
-  *handler)
-                                        {
-                                          auto newResp =
-  handler->stealResponse(); #ifdef ARANGODB_ENABLE_MAINTAINER_MODE
-                                          arangodb::HttpResponse &response =
-  dynamic_cast<arangodb::HttpResponse &>(*baseRes); #else arangodb::HttpResponse
-  &response = static_cast<arangodb::HttpResponse &>(*newResp); #endif auto
-  _response = response.stealBody(); auto resp =
-  drogon::HttpResponse::newHttpResponse();
-                                          resp->setStatusCode(static_cast<drogon::HttpStatusCode>(response.responseCode()));
-                                          resp->setContentTypeCodeAndCustomString(drogon::ContentType::CT_NONE,
-  response.responseString(response.responseCode()));  // HttpRequest.cpp 492 for
-  (auto &i : response.headers()) resp->addHeader(i.first, i.second); for (auto
-  &i : response.cookies()) resp->addHeader("Set-Cookie", i);
-                                          resp->setBody(_response->toString());
-                                          LOG_DEBUG << _response->toString(); //
-  why I need to log_debug to get response! callback(resp);
-                                        },
-                                        callback);
-                                    if (er) { system_::sendError(callback,
-  reason); }
-                                  },
-                                  {drogon::Get});*/
-    // redirect / route to /web
-    /*drogon::app().registerHandler(
-        "/",
-        [](drogon::HttpRequestPtr const &,
-           std::function<void(drogon::HttpResponsePtr const &)> &&cb) {
-            auto res = drogon::HttpResponse::newRedirectionResponse(
-                "/web", drogon::k301MovedPermanently);
-            cb(res);
-        },
-        {drogon::Get});*/
 }
 void registerRegexApi()
 {
-    /*auto const &config = drogon::app().getCustomConfig();
-    auto const &routes = config["routes"];
-    for (auto const &key : routes.getMemberNames())
-    {
-      for (auto const &it : routes[key])
-      {
-        auto const &route = it["route"].asString();
-        auto const &type = it["type"].asString();
-        auto const &url = it["url"].asString();
-        if (type == "static")
-        {
-          drogon::app().registerHandler(route,
-                                        [=](drogon::HttpRequestPtr const &req,
-    std::function<void(drogon::HttpResponsePtr const &cb)> &&cb) {
-    system_::foxxApiResponse(req, std::move(cb), std::string{url}); },
-                                        {drogon::Get});
-        }
-        else if (type == "regex")
-        {
-          if (url.find("$1") != std::string::npos)
-          {
-            auto const &defaults = (it.isMember("default")) ? it["default"] :
-    Json::Value(Json::ValueType::arrayValue); auto const &firstDefault =
-    defaults.size() > 0 ? defaults[0].asString() : "";
-            drogon::app().registerHandler(route,
-                                          [=](RequestHandlerParams, std::string
-    &&p1) { return system_::foxxApiResponse(req, std::move(callback),
-    pystring::replace(url, "$1", (p1.empty() ? firstDefault : p1))); },
-                                          {drogon::Post, drogon::Get,
-    drogon::Patch, drogon::Put, drogon::Options, drogon::Head, drogon::Delete});
-          }
-          else
-          {
-            drogon::app().registerHandler(route,
-                                          [=](RequestHandlerParams)
-                                          { return system_::foxxApiResponse(req,
-    std::move(callback), std::string{url}); });
-          }
-        }
-      }
-    }
-    drogon::app().registerHandlerViaRegex("/(.*)",
-    &api::system_::foxxApiResponse, {drogon::Post, drogon::Get, drogon::Patch,
-    drogon::Put, drogon::Options, drogon::Head, drogon::Delete});
-    */
-
     // all admin route forward to admin page
     drogon::app().registerHandlerViaRegex(
         "^(?!assets|web_assets)(.*)/admin/(.*)",
@@ -250,9 +162,10 @@ ok::smart_actor::connection::Session getSession(
     drogon::HttpRequestPtr const &req)
 {
     ok::smart_actor::connection::Session session;
-    // auto jwtEncodedCookie = req->getCookie("jwt");
-    // auto subdomain = ok::utils::html::getSubdomain(req->getHeader("host"));
-    // ok::db::authenticateAndSaveSession(jwtEncodedCookie, session, subdomain);
+     auto jwtEncodedCookie = req->getCookie("jwt");
+     auto subdomain = ok::utils::string::getLastThirdSegment(req->getHeader("host"));
+     // TODO:
+     // ok::db::authenticateAndSaveSession(jwtEncodedCookie, session, subdomain);
     return session;
 }
 bool initializeUser(ok::smart_actor::connection::Session &session) noexcept
@@ -303,7 +216,7 @@ std::string getFileName(std::string const &key,
 
     // TODO: can make generic function for this:
     std::string query{"MATCH (u) WHERE ID(u) = $id RETURN u;"};
-    const auto [error, maybeResult] = mgCall(query, p);
+    const auto [error, maybeResult] = mgCall(query, p, session.mg_port);
 
     if (!error.empty())
     {
@@ -331,7 +244,7 @@ std::string getFileName(std::string const &key,
 std::string makePath(std::string const &fileName,
                      ok::smart_actor::connection::Session &session) noexcept
 {
-    return std::filesystem::current_path().string() + "/user_data/" + fileName;
+    return std::getenv("HOME") + std::string{"/"} + session.subDomain + std::string{"/user_data/"} + fileName;
 }
 bool saveThumbnails(std::string const &fileName) noexcept
 {
@@ -367,7 +280,7 @@ std::tuple<ErrorMsg, VertexId> saveFileToDatabase(
 
 //    std::string query{"MATCH (u:Media {md5: $md5}) RETURN u;"};
     std::string query{"MATCH (n) WHERE (n:Media OR n:Temp) AND n.md5 = $md5 RETURN n"};
-    const auto [error, maybeResult] = mgCall(query, p);
+    const auto [error, maybeResult] = mgCall(query, p, session.mg_port);
     if (!error.empty())
     {
         return {error, {}};
@@ -388,7 +301,7 @@ std::tuple<ErrorMsg, VertexId> saveFileToDatabase(
     const auto [error2, maybeResult2] = mgCall(
         std::string{"CREATE (c:"} + (isTemp ? "Temp" : "Media") +  " {name: $name, type: $type, md5: $md5, createdAt: "
         "$createdAt}) return c;",
-        p2);
+        p2, session.mg_port);
     if (!error2.empty())
     {
         return {error2, -1};
@@ -536,7 +449,7 @@ void upload(RequestHandlerParams)
         }
         ok::db::MGParams p1{{"ids", mg_value_make_list(idList)}};
         auto [error, response] = db::mgCall(
-            "MATCH (n) WHERE any(x in $ids WHERE x = ID(n)) return n", p1);
+            "MATCH (n) WHERE any(x in $ids WHERE x = ID(n)) return n", p1, session.mg_port);
         if (!error.empty())
         {
             impl::sendFailure(error, callback);

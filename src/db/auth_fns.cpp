@@ -2,34 +2,40 @@
 #include "db/mgclientPool.hpp"
 #include "third_party/mgclient/src/mgvalue.h"
 #include "jwt/jwt.hpp"
-#include "utils/BatchArrayMessage.hpp"
 #include "utils/html_functions.hpp"
 #include "lib/json_functions.hpp"
 #include "lib/mg_helper.hpp"
 #include "utils/time_functions.hpp"
 namespace ok::db::auth
 {
-int getMemberKeyFromJwt(std::string const &jwtEncodedCookie)
+std::tuple<SubDomain, int>  getMemberKeyFromJwt(std::string const &jwtEncodedCookie)
 {
     int memberKey{-1};
     if (jwtEncodedCookie.empty())
-        return memberKey;
+        return {"", memberKey};
     auto dec_obj = ok::utils::jwt_functions::decodeCookie(jwtEncodedCookie);
     if (dec_obj.payload().has_claim("memberKey"))
     {
-        auto memberKey =
+        auto memberKey_ =
             dec_obj.payload().get_claim_value<std::string>("memberKey");
-        return std::stoi(memberKey);
+        memberKey =  std::stoi(memberKey_);
     }
-    return memberKey;
+    SubDomain subDomain;
+    if (dec_obj.payload().has_claim("subDomain"))
+    {
+        subDomain =
+            dec_obj.payload().get_claim_value<std::string>("subDomain");
+
+    }
+    return {subDomain, memberKey};
 }
 
-std::tuple<ErrorMsg, int> registerFn(jsoncons::ojson const &o)
+std::tuple<ErrorMsg, int> registerFn(jsoncons::ojson const &o, SubDomain const &subDomain, int mgPort)
 {
     if (jsoncons::ObjectMemberIsObject(o, "body"))
     {
         if (!jsoncons::ObjectMemberIsString(o["body"], "email"))
-            return {"Email Adress must be provided", -1};
+            return {"Email Address must be provided", -1};
         if (!jsoncons::ObjectMemberIsString(o["body"], "pass"))
             return {"Password must be provided", -1};
     }
@@ -40,14 +46,14 @@ std::tuple<ErrorMsg, int> registerFn(jsoncons::ojson const &o)
     ok::db::MGParams p{{"email", mg_value_make_string(email.c_str())}};
 
     std::string query{"MATCH (u:User {email: $email}) RETURN u;"};
-    const auto [error, maybeResult] = mgCall(query, p);
+    const auto [error, maybeResult] = mgCall(query, p, mgPort);
     if (!error.empty())
     {
         return {error, {}};
     }
     if (ok::db::getIdFromMGResponse(*maybeResult) != -1)
     {
-        return {"Email Adress already exist", -1};
+        return {"Email Address already exist", -1};
     }
 
     ok::db::MGParams p2{{"email", mg_value_make_string(email.c_str())},
@@ -59,7 +65,8 @@ std::tuple<ErrorMsg, int> registerFn(jsoncons::ojson const &o)
     const auto [error2, maybeResult2] = mgCall(
         "CREATE (c:User {email: $email, pass: $pass, createdAt: "
         "$createdAt}) return c;",
-        p2);
+        p2,
+        mgPort);
     if (!error2.empty())
     {
         return {error2, -1};
@@ -68,11 +75,15 @@ std::tuple<ErrorMsg, int> registerFn(jsoncons::ojson const &o)
     auto userId = ok::db::getIdFromMGResponse(*maybeResult2);
     if (userId == -1)
         return {"cant set new password", -1};
-    else
+    else {
+        if (subDomain == "system") {
+            // 1. fire a script to create a db
+        }
         return {"", ok::db::getIdFromMGResponse(*maybeResult2)};
+    }
 }
 
-std::tuple<ErrorMsg, int> login(const jsoncons::ojson &o)
+std::tuple<ErrorMsg, int> login(const jsoncons::ojson &o, int mgPort)
 {
     if (jsoncons::ObjectMemberIsObject(o, "body"))
     {
@@ -91,7 +102,7 @@ std::tuple<ErrorMsg, int> login(const jsoncons::ojson &o)
                        {"pass", mg_value_make_string(password.c_str())}};
 
     std::string query{"MATCH (u:User {email: $email, pass: $pass}) return u;"};
-    const auto [error, maybeResult] = mgCall(query, p);
+    const auto [error, maybeResult] = mgCall(query, p, mgPort);
     if (!error.empty())
     {
         return {error, -1};
@@ -102,14 +113,15 @@ std::tuple<ErrorMsg, int> login(const jsoncons::ojson &o)
 
 std::tuple<int, jsoncons::ojson> loginJwt(std::string const &jwtEncoded)
 {
-    auto memberKey = db::auth::getMemberKeyFromJwt(jwtEncoded);
-    if (memberKey == -1)
+    auto [subDomain, memberKey] = db::auth::getMemberKeyFromJwt(jwtEncoded);
+    auto mgPort = ok::db::auth::getSubDomainMGPort(subDomain);
+    if (subDomain.empty() || memberKey == -1)
     {
-        return {memberKey, jsoncons::ojson::null()};
+        return {-1, jsoncons::ojson::null()};
     }
     else
     {
-        auto [error, member] = user(memberKey);
+        auto [error, member] = user(memberKey, mgPort);
         if (error.empty())
         {
             return {member["id"].as<int>(), member};
@@ -121,7 +133,7 @@ std::tuple<int, jsoncons::ojson> loginJwt(std::string const &jwtEncoded)
     }
 }
 // wip
-std::tuple<ErrorMsg, std::string> change_password(VertexId const &memberKey,
+std::tuple<ErrorMsg, std::string> change_password(VertexId const &memberKey, int mgPort,
                                                   jsoncons::ojson const &o)
 {
     if (jsoncons::ObjectMemberIsObject(o, "body"))
@@ -149,7 +161,7 @@ std::tuple<ErrorMsg, std::string> change_password(VertexId const &memberKey,
 
     std::string query{
         "MATCH (u:User {email: $email, password: $pass}) return u;"};
-    const auto [error, maybeResult] = mgCall(query, p);
+    const auto [error, maybeResult] = mgCall(query, p, mgPort);
     if (!error.empty())
     {
         return {error, ""};
@@ -167,7 +179,8 @@ std::tuple<ErrorMsg, std::string> change_password(VertexId const &memberKey,
     const auto [error2, maybeResult2] = mgCall(
         "MATCH (u:User {email: $email, pass: $pass}) SET "
         "u.pass = $newPassword return u;",
-        p2);
+        p2,
+        mgPort);
     if (!error2.empty())
     {
         return {error2, ""};
@@ -181,7 +194,7 @@ std::tuple<ErrorMsg, std::string> change_password(VertexId const &memberKey,
 }
 namespace
 {
-jsoncons::ojson getRolesOfUser(int const &memberKey)
+jsoncons::ojson getRolesOfUser(int const &memberKey, int mgPort)
 {
     if (!memberKey)
         return jsoncons::ojson::null();
@@ -190,7 +203,7 @@ jsoncons::ojson getRolesOfUser(int const &memberKey)
 
     std::string query{
         "MATCH (c:User)-[r:UserRole]->(n)  WHERE ID(c) = $id return COLLECT(DISTINCT id(n));"};
-    const auto [error, maybeResult] = mgCall(query, p);
+    const auto [error, maybeResult] = mgCall(query, p, mgPort);
     if (!error.empty())
     {
         return jsoncons::ojson::null();
@@ -212,7 +225,7 @@ jsoncons::ojson getRolesOfUser(int const &memberKey)
     return jsoncons::ojson::null();
 }
 }
-std::tuple<ErrorMsg, jsoncons::ojson> user(int const memberKey)
+std::tuple<ErrorMsg, jsoncons::ojson> user(int const memberKey, int mgPort)
 {
     if (!memberKey)
         return {"Not Logged In", jsoncons::ojson::null()};
@@ -221,7 +234,7 @@ std::tuple<ErrorMsg, jsoncons::ojson> user(int const memberKey)
 
     // TODO: can make generic function for this:
     std::string query{"MATCH (u) WHERE ID(u) = $id RETURN u;"};
-    const auto [error, maybeResult] = mgCall(query, p);
+    const auto [error, maybeResult] = mgCall(query, p, mgPort);
     if (!error.empty())
     {
         return {error, jsoncons::ojson::null()};
@@ -237,7 +250,7 @@ std::tuple<ErrorMsg, jsoncons::ojson> user(int const memberKey)
         {
             auto j = convertNodeToJson(maybeResult.value()[0][0].ValueNode());
             j["P"].erase("pass");
-            j["P"]["roles"] = getRolesOfUser(memberKey);
+            j["P"]["roles"] = getRolesOfUser(memberKey, mgPort);
             return {"", j};
         }
         else
@@ -245,7 +258,7 @@ std::tuple<ErrorMsg, jsoncons::ojson> user(int const memberKey)
     }
     return {"user not exist", jsoncons::ojson::null()};
 }
-int getSubDomainPort(std::string const &subDomain)
+int getSubDomainMGPort(std::string const &subDomain)
 {
     if (subDomain.empty()) {
         return -1;

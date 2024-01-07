@@ -51,12 +51,12 @@ sync_actor_int::behavior_type SyncActor(SyncActorPointer self)
         });
 
     // create new connection:
-    auto client = mg::Client::Connect(self->state.params);
-    if (!client)
+    auto mgClient = mg::Client::Connect(self->state.params);
+    if (!mgClient)
     {
         LOG_DEBUG << "Failed to connect MG Server. Host=" << self->state.params.host << " Port=" << self->state.params.port;
     } else {
-        self->state.mgClient = std::move(client);
+        self->state.mgClient = std::move(mgClient);
     }
 
     return {

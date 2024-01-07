@@ -70,8 +70,8 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
             // on transaction error, we need to create a new connection.
             // its better to always create a new connection because after some
             // inactivity connection is lost too.
-            auto client = mg::Client::Connect(self->state.params);
-            if (!client)
+            auto mgClient = mg::Client::Connect(self->state.params);
+            if (!mgClient)
             {
                 LOG_ERROR << "Failed to connect MG Server";
                 auto responseResult = ok::smart_actor::connection::wsMessageBase();
@@ -82,9 +82,9 @@ mutation_actor_int::behavior_type MutationActor(MutationActorPointer self)
                                       event,
                                       "Failed to connect MG Server"));
             }
-            self->state.mgClient = std::move(client);
+            self->state.mgClient = std::move(mgClient);
 
-            self->send(connectionActor, caf::forward_atom_v, ok::db::mutate::mutate_data(event, args, self->state.mgClient, ok::smart_actor::connection::Session{}));
+            self->send(connectionActor, caf::forward_atom_v, ok::db::mutate::mutate_data(event, args, self->state.mgClient, session));
         },
         [=](shutdown_atom) { self->unbecome(); }};
 }

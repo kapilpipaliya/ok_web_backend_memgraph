@@ -18,15 +18,15 @@ TEST(RegistrationTest, BasicAssertions)
     params.host = "localhost";
     params.port = 1104;
     params.use_ssl = false;
-    auto client = mg::Client::Connect(params);
+    auto mgClient = mg::Client::Connect(params);
 
     ok::db::MGParams p{{"email", mg_value_make_string("kapilp")}};
 
-    if (!client->Execute("MATCH (u {email: $email}) DELETE u", p.asConstMap()))
+    if (!mgClient->Execute("MATCH (u {email: $email}) DELETE u", p.asConstMap()))
     {
         std::cerr << "Failed to execute query!"
                   << "MATCH (n) RETURN n;"
-                  << " " << mg_session_error(client->session_);
+                  << " " << mg_session_error(mgClient->session_);
     }
 
     jsoncons::ojson registerArgs = jsoncons::ojson::parse(R"(

@@ -10,7 +10,6 @@ namespace ok::utils
 {
 namespace html
 {
-std::string getSubdomain(std::string const &host);
 bool isMobile(std::string const &userAgent);
 }  // namespace html
 namespace jwt_functions

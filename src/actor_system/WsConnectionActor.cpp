@@ -122,7 +122,7 @@ void saveNewConnection(
     auto [memberKey, member] = ok::db::auth::loginJwt(jwtEncoded);
     state.session.memberKey = memberKey;
     state.session.subDomain = firstSubDomain;
-    state.session.mg_port = ok::db::auth::getSubDomainPort(firstSubDomain);
+    state.session.mg_port = ok::db::auth::getSubDomainMGPort(firstSubDomain);
 
     one.push_back(member);
     memberMsg.push_back(one);

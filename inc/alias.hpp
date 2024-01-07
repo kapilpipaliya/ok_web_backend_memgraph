@@ -2,6 +2,8 @@
 #include <string>
 #include <jsoncons/json.hpp>
 
+using SubDomain = std::string;
+
 using VertexId = int;
 using VertexLabel = std::string;
 using EdgeId = int;
