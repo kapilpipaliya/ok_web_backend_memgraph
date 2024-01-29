@@ -59,7 +59,7 @@
       {
         "uri_prefix": "/assets_web",
         "default_content_type": "text/plain",
-        "alias": "$HOME/portal/distweb/assets_web",
+        "alias": "/root/portal/distweb/assets_web",
         "is_case_sensitive": false,
         "allow_all": true,
         "is_recursive": true
@@ -67,7 +67,7 @@
       {
         "uri_prefix": "/assets",
         "default_content_type": "text/plain",
-        "alias": "$HOME/portal/distadmin/assets",
+        "alias": "/root/portal/distadmin/assets",
         "is_case_sensitive": false,
         "allow_all": true,
         "is_recursive": true

@@ -48,7 +48,7 @@ void registerApi()
                                                                                 auto subDomain = ok::utils::string::getLastThirdSegment(req->getHeader("host"));
 
                                                                                 jsoncons::ojson args{};
-                                                                                auto session = ok::smart_actor::connection::Session{-1, subDomain ,1104};
+                                                                                auto session = ok::smart_actor::connection::Session{-1, subDomain ,1102};
 
                                                                                 mg::Client::Params params;
                                                                                 params.host = "localhost";
@@ -76,6 +76,51 @@ void registerApi()
 
                                   },
                                   {drogon::Get, drogon::Post, drogon::Options});
+
+
+    drogon::app().registerHandler("/collection_data",
+                                  [](RequestHandlerParams){
+
+
+                                      // Create a task to run the file upload logic in a separate thread
+                                      std::thread([req, callback]() {
+                                          auto subDomain = ok::utils::string::getLastThirdSegment(req->getHeader("host"));
+                                          std::string collection;
+                                          if(req->method() == drogon::Get) {
+                                              collection = req->getParameter("collection");
+                                          }
+
+                                          jsoncons::ojson args{};
+                                          args["collection"] = collection;
+                                          auto session = ok::smart_actor::connection::Session{-1, subDomain ,1102};
+
+                                          mg::Client::Params params;
+                                          params.host = "localhost";
+                                          params.port = session.mg_port;
+                                          params.use_ssl = false;
+
+                                          // create new connection:
+                                          auto mgClient = mg::Client::Connect(params);
+                                          if (!mgClient)
+                                          {
+                                              LOG_ERROR << "Failed to connect MG Server. Host=" << params.host << " Port=" << params.port;
+                                          }
+
+                                          jsoncons::ojson result =
+                                              ok::db::get::getCollectionData(args, mgClient, session);
+
+                                          auto resp = drogon::HttpResponse::newHttpResponse();
+                                          resp->setBody(result.to_string());
+                                          resp->setContentTypeCode(drogon::CT_APPLICATION_JSON);
+                                          callback(resp);
+                                      }).detach(); // Detach the thread to let it run independently
+
+
+
+
+                                  },
+                                  {drogon::Get, drogon::Post, drogon::Options});
+
     drogon::app().registerHandler("/mutate_data",
                                   [](RequestHandlerParams){
 
@@ -83,7 +128,7 @@ void registerApi()
                                                                             // Create a task to run the file upload logic in a separate thread
                                                                             std::thread([req, callback]() {
                                                                                 auto subDomain = ok::utils::string::getLastThirdSegment(req->getHeader("host"));
-                                                                                auto session = ok::smart_actor::connection::Session{-1, subDomain,1104};
+                                                                                auto session = ok::smart_actor::connection::Session{-1, subDomain,1102};
 
                                                                                 auto event = jsoncons::ojson::array();
                                                                                 event.push_back("post");

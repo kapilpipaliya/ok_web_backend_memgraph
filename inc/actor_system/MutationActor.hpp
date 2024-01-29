@@ -14,7 +14,7 @@ struct mutationState
     mg::Client::Params params;
     mutationState(){
         params.host = "localhost";
-        params.port = 0;
+        params.port = 1102; // should be dynamic
         params.use_ssl = false;
     }
 };

@@ -825,7 +825,7 @@ jsoncons::ojson mutate_data(
         mgClient->Finalize();
     }
 
-    ok::smart_actor::connection::addEventAndJson(responseResult,
+    return ok::smart_actor::connection::addEventAndJson(responseResult,
                                                  event,
                                                  resultTxn);
 }

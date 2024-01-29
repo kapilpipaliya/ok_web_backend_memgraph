@@ -23,7 +23,7 @@ struct syncActorState
   mg::Client::Params params;
   syncActorState(){
         params.host = "localhost";
-        params.port = 0;
+        params.port = 1102;//0;
         params.use_ssl = false;
   }
 };
